@@ -1,3 +1,4 @@
 coverage==3.5.1
+-e git+ssh://git@git.roku-sigma.com/python-patterns@e157fa30c28a00a1bdc5e363128adb8814a8e4e0#egg=python_patterns-dev
 unittest-xml-reporting==1.2
 unittest2==0.5.1
