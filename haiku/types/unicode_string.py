@@ -37,6 +37,7 @@
 double duty both representing textual data and human-readable serialized
 values of other types other types. This is of particular importance in
 defining the s-expression and m-expression serialization formats."""
+
 UnicodeString = unicode
 
 # ===----------------------------------------------------------------------===

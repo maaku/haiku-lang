@@ -39,6 +39,7 @@ the `Omega` is a bit like arguing how many angels could fit on the head of a
 pin. For practical purposes, the omega type has one value representing the
 absence of value (not unlike the Python keyword `None`), and all instances of
 the omega type are this value, represented as an empty byte array."""
+
 Omega = type(None)
 
 # ===----------------------------------------------------------------------===

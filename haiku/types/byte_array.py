@@ -36,6 +36,7 @@
 """A (possibly empty) ordered sequence of bytes. `ByteArray`'s do double duty
 as both the symbols of the language, and as the binary serialization format of
 other types."""
+
 ByteArray = str
 
 # ===----------------------------------------------------------------------===

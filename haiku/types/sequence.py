@@ -36,6 +36,7 @@
 """A sequence is an ordered list of objects. Sequences (lists) are the most
 fundamental type in Lisp, the LISt Processing language, and map very well onto
 the built-in Python `list` type."""
+
 Sequence = list
 
 # ===----------------------------------------------------------------------===

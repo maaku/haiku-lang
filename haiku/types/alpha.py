@@ -36,6 +36,7 @@
 """`Alpha` is a conceptual dummy type which is the proper supertype of every
 type except itself, and a proper subtype of none. Within the Python
 interpreter, all types derive from `Alpha`."""
+
 Alpha = object
 
 # ===----------------------------------------------------------------------===
