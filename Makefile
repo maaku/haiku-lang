@@ -30,6 +30,8 @@
 # DOCUMENTATION, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # ===----------------------------------------------------------------------===
 
+-include Makefile.local
+
 .PHONY: all
 all: .pkg/.stamp-h
 
@@ -67,6 +69,7 @@ clean: mostlyclean
 .PHONY: distclean
 distclean: clean
 	-rm -rf .cache
+	-rm -rf Makefile.local
 
 .PHONY: maintainer-clean
 maintainer-clean: distclean

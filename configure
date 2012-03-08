@@ -32,7 +32,7 @@
 # DOCUMENTATION, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # ===----------------------------------------------------------------------===
 
-exit 0
+touch Makefile.local
 
 # ===--------------------------------------------------------------------===
 # End of File
