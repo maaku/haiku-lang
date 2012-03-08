@@ -56,7 +56,7 @@ for dirpath, dirnames, filenames in os.walk('haiku'):
       pkg = pkg.replace(os.path.altsep, '.')
     packages.append(pkg)
   elif filenames:
-    prefix = dirpath[16:] # Strip "haiku/" or "haiku\"
+    prefix = dirpath[6:] # Strip "haiku/" or "haiku\"
     for f in filenames:
       data_files.append(os.path.join(prefix, f))
 
