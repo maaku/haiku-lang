@@ -81,23 +81,23 @@ dist:
 
 # ===--------------------------------------------------------------------===
 
-.cache/virtualenv/virtualenv-1.6.4.tar.gz:
+.cache/virtualenv/virtualenv-1.7.tar.gz:
 	mkdir -p .cache/virtualenv
-	sh -c "cd .cache/virtualenv && curl -O http://pypi.python.org/packages/source/v/virtualenv/virtualenv-1.6.4.tar.gz"
+	sh -c "cd .cache/virtualenv && curl -O http://pypi.python.org/packages/source/v/virtualenv/virtualenv-1.7.tar.gz"
 
-.pkg/.stamp-h: conf/requirements.*.pip .cache/virtualenv/virtualenv-1.6.4.tar.gz
+.pkg/.stamp-h: conf/requirements.*.pip .cache/virtualenv/virtualenv-1.7.tar.gz
 	${MAKE} clean
 	tar \
 	  -C .cache/virtualenv --gzip \
-	  -xf .cache/virtualenv/virtualenv-1.6.4.tar.gz
-	python .cache/virtualenv/virtualenv-1.6.4/virtualenv.py \
+	  -xf .cache/virtualenv/virtualenv-1.7.tar.gz
+	python .cache/virtualenv/virtualenv-1.7/virtualenv.py \
 	  --clear \
 	  --no-site-packages \
 	  --distribute \
 	  --never-download \
 	  --prompt="(haiku-lang) " \
 	  .pkg
-	rm -rf .cache/virtualenv/virtualenv-1.6.4
+	rm -rf .cache/virtualenv/virtualenv-1.7
 	.pkg/bin/easy_install readline
 	mkdir -p .cache/pypi
 	for reqfile in conf/requirements.*.pip; do \
