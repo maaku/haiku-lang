@@ -48,11 +48,11 @@ from binascii import b2a_base64
 
 class SimpleExpressionPickler(BasePickler):
   """Implements a serialization format for a variant of classic Lisp s-
-  expressions, here renamed “Simple Expressions”. Simple expressions are
-  Lisp's lambda calculus expressed through parenthetical prefix notation.
+  expression notation, here renamed “Simple Expressions”. Simple expressions
+  are Lisp's lambda calculus expressed through parenthetical prefix notation.
   Simple expressions are meant to be the least complex syntax for for
-  representing Lisp as Unicode text.--a medium between binary-encoded
-  canonical expressions and much more human-readable meta expressions.
+  representing Lisp as Unicode text--a practical compromise between binary-
+  encoded canonical expressions and much more human-readable meta expressions.
   
     >>> from haiku.pickle import SimpleExpressionPickler
     >>> pickler = SimpleExpressionPickler()
