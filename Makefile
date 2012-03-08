@@ -104,7 +104,7 @@ ${PKG_ROOT}/.stamp-h: conf/requirements*.pip ${CACHE_ROOT}/virtualenv/virtualenv
 	  --never-download \
 	  --prompt="(haiku-lang) " \
 	  "${PKG_ROOT}"
-	rm -rf "${CACHE_ROOT}"/virtualenv/virtualenv-1.7
+	-rm -rf "${CACHE_ROOT}"/virtualenv/virtualenv-1.7
 	"${PKG_ROOT}"/bin/easy_install readline
 	mkdir -p "${CACHE_ROOT}"/pypi
 	for reqfile in conf/requirements*.pip; do \
