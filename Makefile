@@ -85,7 +85,7 @@ dist:
 	mkdir -p .cache/virtualenv
 	sh -c "cd .cache/virtualenv && curl -O 'http://pypi.python.org/packages/source/v/virtualenv/virtualenv-1.7.tar.gz'"
 
-.pkg/.stamp-h: conf/requirements.*.pip .cache/virtualenv/virtualenv-1.7.tar.gz
+.pkg/.stamp-h: conf/requirements*.pip .cache/virtualenv/virtualenv-1.7.tar.gz
 	${MAKE} clean
 	tar \
 	  -C .cache/virtualenv --gzip \
