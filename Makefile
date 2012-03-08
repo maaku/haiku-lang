@@ -94,6 +94,7 @@ ${CACHE_ROOT}/virtualenv/virtualenv-1.7.tar.gz:
 
 ${PKG_ROOT}/.stamp-h: conf/requirements*.pip ${CACHE_ROOT}/virtualenv/virtualenv-1.7.tar.gz
 	${MAKE} clean
+	mkdir -p "${CACHE_ROOT}"/pypi
 	tar \
 	  -C "${CACHE_ROOT}"/virtualenv --gzip \
 	  -xf "${CACHE_ROOT}"/virtualenv/virtualenv-1.7.tar.gz
@@ -106,7 +107,6 @@ ${PKG_ROOT}/.stamp-h: conf/requirements*.pip ${CACHE_ROOT}/virtualenv/virtualenv
 	  "${PKG_ROOT}"
 	-rm -rf "${CACHE_ROOT}"/virtualenv/virtualenv-1.7
 	"${PKG_ROOT}"/bin/easy_install readline
-	mkdir -p "${CACHE_ROOT}"/pypi
 	for reqfile in conf/requirements*.pip; do \
 	  "${PKG_ROOT}"/bin/python "${PKG_ROOT}"/bin/pip install \
 	    --download-cache="${CACHE_ROOT}"/pypi \
