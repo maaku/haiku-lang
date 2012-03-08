@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# === haiku.types.sequence ------------------------------------------------===
+# === haiku.types.dictionary ----------------------------------------------===
 # Copyright © 2011-2012, RokuSigma Inc. and contributors. See AUTHORS for more
 # details.
 #
