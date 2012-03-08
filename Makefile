@@ -80,7 +80,6 @@ maintainer-clean: distclean
 dist:
 
 # ===--------------------------------------------------------------------===
-# ===--------------------------------------------------------------------===
 
 .cache/virtualenv/virtualenv-1.6.4.tar.gz:
 	mkdir -p .cache/virtualenv
