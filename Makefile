@@ -63,6 +63,7 @@ mostlyclean:
 
 .PHONY: clean
 clean: mostlyclean
+	-rm -rf dist
 	-rm -rf build
 	-rm -rf .pkg
 
@@ -78,6 +79,7 @@ maintainer-clean: distclean
 
 .PHONY: dist
 dist:
+	.pkg/bin/python setup.py sdist
 
 # ===--------------------------------------------------------------------===
 
