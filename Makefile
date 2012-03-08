@@ -32,11 +32,15 @@
 
 -include Makefile.local
 
+ROOT=$(shell pwd)
+CACHE_ROOT=${ROOT}/.cache
+PKG_ROOT=${ROOT}/.pkg
+
 .PHONY: all
-all: .pkg/.stamp-h
+all: ${PKG_ROOT}/.stamp-h
 
 .PHONY: check
-check: .pkg/.stamp-h
+check: ${PKG_ROOT}/.stamp-h
 	mkdir -p build/report/xunit
 	echo "\
 	import unittest2; \
@@ -50,13 +54,13 @@ check: .pkg/.stamp-h
 	  ] \
 	)" >.pytest.py
 	chmod +x .pytest.py
-	.pkg/bin/coverage run .pytest.py || { rm -f .pytest.py; exit 1; }
-	.pkg/bin/coverage xml --omit=".pytest.py" -o build/report/coverage.xml
+	"${PKG_ROOT}"/bin/coverage run .pytest.py || { rm -f .pytest.py; exit 1; }
+	"${PKG_ROOT}"/bin/coverage xml --omit=".pytest.py" -o build/report/coverage.xml
 	rm -f .pytest.py
 
 .PHONY: shell
-shell: .pkg/.stamp-h
-	.pkg/bin/ipython
+shell: ${PKG_ROOT}/.stamp-h
+	"${PKG_ROOT}"/bin/ipython
 
 .PHONY: mostlyclean
 mostlyclean:
@@ -65,11 +69,11 @@ mostlyclean:
 clean: mostlyclean
 	-rm -rf dist
 	-rm -rf build
-	-rm -rf .pkg
+	-rm -rf "${PKG_ROOT}"
 
 .PHONY: distclean
 distclean: clean
-	-rm -rf .cache
+	-rm -rf "${CACHE_ROOT}"
 	-rm -rf Makefile.local
 
 .PHONY: maintainer-clean
@@ -79,35 +83,35 @@ maintainer-clean: distclean
 
 .PHONY: dist
 dist:
-	.pkg/bin/python setup.py sdist
+	"${PKG_ROOT}"/bin/python setup.py sdist
 
 # ===--------------------------------------------------------------------===
 
-.cache/virtualenv/virtualenv-1.7.tar.gz:
-	mkdir -p .cache/virtualenv
-	sh -c "cd .cache/virtualenv && curl -O 'http://pypi.python.org/packages/source/v/virtualenv/virtualenv-1.7.tar.gz'"
+${CACHE_ROOT}/virtualenv/virtualenv-1.7.tar.gz:
+	mkdir -p "${CACHE_ROOT}"/virtualenv
+	sh -c "cd "${CACHE_ROOT}"/virtualenv && curl -O 'http://pypi.python.org/packages/source/v/virtualenv/virtualenv-1.7.tar.gz'"
 
-.pkg/.stamp-h: conf/requirements*.pip .cache/virtualenv/virtualenv-1.7.tar.gz
+${PKG_ROOT}/.stamp-h: conf/requirements*.pip ${CACHE_ROOT}/virtualenv/virtualenv-1.7.tar.gz
 	${MAKE} clean
 	tar \
-	  -C .cache/virtualenv --gzip \
-	  -xf .cache/virtualenv/virtualenv-1.7.tar.gz
-	python .cache/virtualenv/virtualenv-1.7/virtualenv.py \
+	  -C "${CACHE_ROOT}"/virtualenv --gzip \
+	  -xf "${CACHE_ROOT}"/virtualenv/virtualenv-1.7.tar.gz
+	python "${CACHE_ROOT}"/virtualenv/virtualenv-1.7/virtualenv.py \
 	  --clear \
 	  --no-site-packages \
 	  --distribute \
 	  --never-download \
 	  --prompt="(haiku-lang) " \
-	  .pkg
-	rm -rf .cache/virtualenv/virtualenv-1.7
-	.pkg/bin/easy_install readline
-	mkdir -p .cache/pypi
+	  "${PKG_ROOT}"
+	rm -rf "${CACHE_ROOT}"/virtualenv/virtualenv-1.7
+	"${PKG_ROOT}"/bin/easy_install readline
+	mkdir -p "${CACHE_ROOT}"/pypi
 	for reqfile in conf/requirements.*.pip; do \
-	  .pkg/bin/python .pkg/bin/pip install \
-	    --download-cache="`pwd`"/.cache/pypi \
+	  "${PKG_ROOT}"/bin/python "${PKG_ROOT}"/bin/pip install \
+	    --download-cache="${CACHE_ROOT}"/pypi \
 	    -r $$reqfile; \
 	done
-	touch .pkg/.stamp-h
+	touch "${PKG_ROOT}"/.stamp-h
 
 # ===--------------------------------------------------------------------===
 # End of File
