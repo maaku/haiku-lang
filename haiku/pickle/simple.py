@@ -46,6 +46,10 @@ from python_patterns.itertools import lookahead
 # Python standard library, Base64 encoding
 from binascii import b2a_base64
 
+__all__ = [
+  'SimpleExpressionPickler',
+]
+
 class SimpleExpressionPickler(BasePickler):
   """Implements a serialization format for a variant of classic Lisp s-
   expression notation, here renamed “Simple Expressions”. Simple expressions

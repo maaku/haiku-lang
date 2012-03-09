@@ -35,6 +35,10 @@
 
 from base import BasePickler
 
+__all__ = [
+  'CanonicalExpressionPickler',
+]
+
 class CanonicalExpressionPickler(BasePickler):
   pass
 

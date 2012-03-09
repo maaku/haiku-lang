@@ -35,6 +35,10 @@
 
 from abc import ABCMeta, abstractmethod
 
+__all__ = [
+  'BasePickler',
+]
+
 class BasePickler(object):
   """A pickler provides a mechanism for serializing Lisp expressions into
   standard, widely-understood formats."""

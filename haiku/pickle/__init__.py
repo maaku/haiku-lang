@@ -33,17 +33,10 @@
 # DOCUMENTATION, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # ===----------------------------------------------------------------------===
 
-from base      import BasePickler
-from canonical import CanonicalExpressionPickler
-from meta      import MetaExpressionPickler
-from simple    import SimpleExpressionPickler
-
-__all__ = [
-  'BasePickler',
-  'CanonicalExpressionPickler',
-  'MetaExpressionPickler',
-  'SimpleExpressionPickler',
-]
+from .base      import *
+from .canonical import *
+from .meta      import *
+from .simple    import *
 
 # ===----------------------------------------------------------------------===
 # End of File
