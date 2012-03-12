@@ -49,21 +49,29 @@ class BasePickler(object):
   @abstractmethod
   def dump(self, ostream, *args, **kwargs):
     ""
+    # FIXME: implement a version that relies upon `self.dumps`, then remove
+    #   the @abstractmethod decorator.
     return super(BasePickler, self).dump(*args, **kwargs)
 
   @abstractmethod
   def dumps(self, *args, **kwargs):
     ""
+    # FIXME: implement a version that relies upon `self.dump`, then remove the
+    #   @abstractmethod decorator.
     return super(BasePickler, self).dumps(*args, **kwargs)
 
   @abstractmethod
   def load(self, istream, *args, **kwargs):
     ""
+    # FIXME: implement a version that relies upon `self.loads`, then remove
+    #   the @abstractmethod decorator.
     return super(BasePickler, self).load(*args, **kwargs)
 
   @abstractmethod
   def loads(self, *args, **kwargs):
     ""
+    # FIXME: implement a version that relies upon `self.load`, then remove the
+    #   @abstractmethod decorator.
     return super(BasePickler, self).loads(*args, **kwargs)
 
 # ===----------------------------------------------------------------------===
