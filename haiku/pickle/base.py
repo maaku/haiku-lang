@@ -40,28 +40,30 @@ __all__ = [
 ]
 
 class BasePickler(object):
-  """A pickler provides a mechanism for serializing Lisp expressions into
-  standard, widely-understood formats."""
+  """A pickler provides a mechanism for serializing Lisp-like code and data
+  expressions of a tuple-oriented language into standard, widely-understood
+  formats. The `BasePPickler` class provides an abstract interface to these
+  serializers."""
   __metaclass__ = ABCMeta
 
   @abstractmethod
   def dump(self, ostream, *args, **kwargs):
-    """"""
+    ""
     return super(BasePickler, self).dump(*args, **kwargs)
 
   @abstractmethod
   def dumps(self, *args, **kwargs):
-    """"""
+    ""
     return super(BasePickler, self).dumps(*args, **kwargs)
 
   @abstractmethod
   def load(self, istream, *args, **kwargs):
-    """"""
+    ""
     return super(BasePickler, self).load(*args, **kwargs)
 
   @abstractmethod
   def loads(self, *args, **kwargs):
-    """"""
+    ""
     return super(BasePickler, self).loads(*args, **kwargs)
 
 # ===----------------------------------------------------------------------===
