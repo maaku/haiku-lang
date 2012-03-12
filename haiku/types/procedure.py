@@ -33,18 +33,31 @@
 # DOCUMENTATION, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # ===----------------------------------------------------------------------===
 
-"""Provides the `Procedure` class, an implementation of the Lisp procedure
-(lambda) type."""
+"The procedure (lambda) type."
+
+__all__ = [
+  'Procedure',
+  'ProcedureCompatible',
+]
+
+# ===----------------------------------------------------------------------===
+
+# Python standard library, abstract base classes
+from abc import ABCMeta
 
 class Procedure(object):
-  """The Lisp procedure (lambda) type."""
   def __init__(self, params, params_ellipsis, kwparams, kwparams_ellipsis,
     environment, body):
     (self.params, self.kwparams, self.environment, self.body) = (
       params, kwparams, environment, body)
+
   def __call__(self, *args, **kwargs):
     return evaluate(self.body, Environment(
       self.params, args, self.kwparams, kwargs, self.environment))
+
+class ProcedureCompatible(object):
+  __metaclass__ = ABCMeta
+ProcedureCompatible.register(Procedure)
 
 # ===----------------------------------------------------------------------===
 # End of File

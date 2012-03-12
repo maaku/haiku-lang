@@ -33,14 +33,40 @@
 # DOCUMENTATION, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # ===----------------------------------------------------------------------===
 
-"""A conceptual dummy type which is the proper subtype of every type except
-itself, and a proper supertype of none. Arguing whether any value exists for
-the `Omega` is a bit like arguing how many angels could fit on the head of a
-pin. For practical purposes, the omega type has one value representing the
-absence of value (not unlike the Python keyword `None`), and all instances of
-the omega type are this value, represented as an empty byte array."""
+"""Provides the Omega conceptual dummy type which is the proper subtype of
+every type except itself, and a proper supertype of none."""
 
-Omega = type(None)
+__all__ = [
+  'Omega',
+  'OmegaCompatible',
+]
+
+# ===----------------------------------------------------------------------===
+
+# Python standard library, abstract base classes
+from abc import ABCMeta
+
+class Omega(object):
+  """A conceptual dummy type which is the proper subtype of every type except
+  itself, and a proper supertype of none. Arguing whether any value exists for
+  the `Omega` is a bit like arguing how many angels could fit on the head of a
+  pin. For practical purposes, the omega type has one value representing the
+  absence of value (not unlike the Python keyword `None`), and all instances of
+  the omega type are this value, represented as an empty byte array."""
+  def __new__(cls, *arg, **kwargs):
+    return None
+
+class OmegaCompatible(object):
+  ""
+  __metaclass__ = ABCMeta
+
+# There shouldn't be any instances of the Omega class, ever, but the following
+# allows `issubclass(Omega, OmegaCompatible)` to be true:
+OmegaCompatible.register(Omega)
+
+# Amazingly, the following does work, making
+# `isinstance(None, OmegaCompatible)` true:
+OmegaCompatible.register(type(None))
 
 # ===----------------------------------------------------------------------===
 # End of File

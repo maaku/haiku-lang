@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# === haiku.types ---------------------------------------------------------===
+# === haiku.types.matrix --------------------------------------------------===
 # Copyright © 2011-2012, RokuSigma Inc. and contributors. See AUTHORS for more
 # details.
 #
@@ -33,19 +33,30 @@
 # DOCUMENTATION, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # ===----------------------------------------------------------------------===
 
-from .alpha     import *
-from .boolean   import *
-from .bytes_    import *
-from .fraction  import *
-from .integer   import *
-from .matrix    import *
-from .omega     import *
-from .procedure import *
-from .relation  import *
-from .sequence  import *
-from .set_      import *
-from .tuple_    import *
-from .unicode_  import *
+"Provides the `Matrix` abstract base class and type."
+
+__all__ = [
+  'Matrix',
+  'MatrixCompatible',
+]
+
+# ===----------------------------------------------------------------------===
+
+# Python standard library, abstract base classes
+from abc import ABCMeta
+
+# FIXME: actually implement the Matrix type, using the numpy package if
+#   available, otherwise falling back on a simple/naïve pure-python
+#   implementation.
+
+class Matrix(object):
+  ""
+  pass
+
+class MatrixCompatible(object):
+  ""
+  __metaclass__ = ABCMeta
+MatrixCompatible.register(Matrix)
 
 # ===----------------------------------------------------------------------===
 # End of File

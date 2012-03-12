@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# === haiku.types ---------------------------------------------------------===
+# === haiku.types.unicode_ ------------------------------------------------===
 # Copyright © 2011-2012, RokuSigma Inc. and contributors. See AUTHORS for more
 # details.
 #
@@ -33,19 +33,30 @@
 # DOCUMENTATION, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # ===----------------------------------------------------------------------===
 
-from .alpha     import *
-from .boolean   import *
-from .bytes_    import *
-from .fraction  import *
-from .integer   import *
-from .matrix    import *
-from .omega     import *
-from .procedure import *
-from .relation  import *
-from .sequence  import *
-from .set_      import *
-from .tuple_    import *
-from .unicode_  import *
+"""A (possibly empty) Unicode-encoded character string. Character strings do
+double duty both representing textual data and human-readable serialized
+values of other types other types. This is of particular importance in
+defining the simple-expression and meta-expression serialization formats."""
+
+__all__ = [
+  'Unicode',
+  'UnicodeCompatible',
+]
+
+# ===----------------------------------------------------------------------===
+
+# Python standard library, abstract base classes
+from abc import ABCMeta
+
+Unicode = unicode
+
+class UnicodeCompatible(object):
+  ""
+  __metaclass__ = ABCMeta
+
+# We are careful to register `unicode` and not `basestring` because `str`
+# values are instances of the `Bytes` type, not `Unicode`.
+UnicodeCompatible.register(Unicode)
 
 # ===----------------------------------------------------------------------===
 # End of File

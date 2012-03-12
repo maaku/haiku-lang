@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# === haiku.types ---------------------------------------------------------===
+# === haiku.types.relation ------------------------------------------------===
 # Copyright © 2011-2012, RokuSigma Inc. and contributors. See AUTHORS for more
 # details.
 #
@@ -33,19 +33,40 @@
 # DOCUMENTATION, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # ===----------------------------------------------------------------------===
 
-from .alpha     import *
-from .boolean   import *
-from .bytes_    import *
-from .fraction  import *
-from .integer   import *
-from .matrix    import *
-from .omega     import *
-from .procedure import *
-from .relation  import *
-from .sequence  import *
-from .set_      import *
-from .tuple_    import *
-from .unicode_  import *
+"""A relation value (relation for short) consists of a *heading* and a *body*,
+where:
+  1) The heading of the relation is a (possibly empty) set of ordered pairs or
+     *attributes* of the form `<A, T>, where: is the name of an attribute, and
+     no two distinct attributes have the same name; and T is the declared type
+     of the attribute.
+  2) The body of of the relation is a (possibly empty) set of tuples, all
+     having that same heading.
+
+In other words, a *relation* as defined by the relational model of Edgar
+Codd."""
+
+__all__ = [
+  'Relation',
+  'RelationCompatible',
+]
+
+# ===----------------------------------------------------------------------===
+
+# Python standard library, abstract base classes
+from abc import ABCMeta
+
+# FIXME: actually implement the Relation type, using the pandas package if
+#   available, otherwise falling back on a simple/naïve pure-python
+#   implementation.
+
+class Relation(object):
+  ""
+  pass
+
+class RelationCompatible(object):
+  ""
+  __metaclass__ = ABCMeta
+RelationCompatible.register(Relation)
 
 # ===----------------------------------------------------------------------===
 # End of File

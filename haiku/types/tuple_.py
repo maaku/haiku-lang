@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# === haiku.types.unicode_string ------------------------------------------===
+# === haiku.types.tuple_ --------------------------------------------------===
 # Copyright © 2011-2012, RokuSigma Inc. and contributors. See AUTHORS for more
 # details.
 #
@@ -33,12 +33,34 @@
 # DOCUMENTATION, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # ===----------------------------------------------------------------------===
 
-"""A (possibly empty) Unicode-encoded character string. Character strings do
-double duty both representing textual data and human-readable serialized
-values of other types other types. This is of particular importance in
-defining the s-expression and m-expression serialization formats."""
+"""A *tuple* is a set of ordered pairs or *attributes* of the form
+`<A, T, V>`, where: `A` is the name of an attribute of the tuple, and no two
+distinct attributes have the same name; `T` is the declared type of the
+attribute; and `V` is the attribute value, an instance of (a subtype of) `T`.
+In other words, a *tuple* as defined by the relational model of Edgar Codd.
 
-UnicodeString = unicode
+Sequences(/lists) can be constructed out of tuples(/maps/dictionaries) if one
+observes that a list is in fact a mapping of indices to values. For that
+reason tuples are the most fundamental type in haiku, a tuple-oriented(/map-
+based) generalization of Lisp. Tuples map nicely onto the Python `dict` type
+for our purposes."""
+
+__all__ = [
+  'Tuple',
+  'TupleCompatible',
+]
+
+# ===----------------------------------------------------------------------===
+
+# Python standard library, abstract base classes
+from abc import ABCMeta
+
+Tuple = dict
+
+class TupleCompatible(object):
+  ""
+  __metaclass__ = ABCMeta
+TupleCompatible.register(Tuple)
 
 # ===----------------------------------------------------------------------===
 # End of File

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# === haiku.types.byte_array ----------------------------------------------===
+# === haiku.types.bytes_ --------------------------------------------------===
 # Copyright © 2011-2012, RokuSigma Inc. and contributors. See AUTHORS for more
 # details.
 #
@@ -33,11 +33,25 @@
 # DOCUMENTATION, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # ===----------------------------------------------------------------------===
 
-"""A (possibly empty) ordered sequence of bytes. `ByteArray`'s do double duty
-as both the symbols of the language, and as the binary serialization format of
+"""A (possibly empty) ordered sequence of bytes. `Bytes`' do double duty as
+both the symbols of the language, and as the binary serialization format of
 other types."""
 
-ByteArray = str
+__all__ = [
+  'Bytes',
+  'BytesCompatible',
+]
+
+# ===----------------------------------------------------------------------===
+
+# Python standard library, abstract base classes
+from abc import ABCMeta
+
+Bytes = str
+
+class BytesCompatible(object):
+  __metaclass__ = ABCMeta
+BytesCompatible.register(Bytes)
 
 # ===----------------------------------------------------------------------===
 # End of File

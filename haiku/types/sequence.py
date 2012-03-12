@@ -33,11 +33,25 @@
 # DOCUMENTATION, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # ===----------------------------------------------------------------------===
 
-"""A sequence is an ordered list of objects. Sequences (lists) are the most
-fundamental type in Lisp, the LISt Processing language, and map very well onto
-the built-in Python `list` type."""
+"""A sequence is a linear ordering of values. Sequences (lists) map very well
+onto the built-in Python `list` type."""
+
+__all__ = [
+  'Sequence',
+  'SequenceCompatible',
+]
+
+# ===----------------------------------------------------------------------===
+
+# Python standard library, abstract base classes
+from abc import ABCMeta
 
 Sequence = list
+
+class SequenceCompatible(object):
+  ""
+  __metaclass__ = ABCMeta
+SequenceCompatible.register(Sequence)
 
 # ===----------------------------------------------------------------------===
 # End of File

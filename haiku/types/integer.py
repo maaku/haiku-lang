@@ -33,9 +33,34 @@
 # DOCUMENTATION, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # ===----------------------------------------------------------------------===
 
-"""The Lisp arbitrary-precision, signed integer type."""
+"An arbitrary-precision, signed integer type."
 
+__all__ = [
+  'Integer',
+  'IntegerCompatible',
+]
+
+# ===----------------------------------------------------------------------===
+
+# Python standard library, abstract base classes
+from abc import ABCMeta
+
+# Python standard library, numeric type hierarchy
+import numbers
+
+# `long` is chosen to represent integers as it is an arbitrary-precision type.
+# Using a regular Python integer should work fine since Python automatically
+# promotes integers in the case of a detected overflows, but that's an
+# optimization we can try out in the future when more unit tests are in place.
 Integer = long
+
+class IntegerCompatible(object):
+  ""
+  __metaclass__ = ABCMeta
+
+# `numbers.Integral` is an abstract base class of both `int` and `long`, so it
+# is sufficient to check for just `numbers.Integral`:
+IntegerCompatible.register(numbers.Integral)
 
 # ===----------------------------------------------------------------------===
 # End of File

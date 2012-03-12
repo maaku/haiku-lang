@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# === haiku.types ---------------------------------------------------------===
+# === haiku.types.set_ ----------------------------------------------------===
 # Copyright © 2011-2012, RokuSigma Inc. and contributors. See AUTHORS for more
 # details.
 #
@@ -33,19 +33,24 @@
 # DOCUMENTATION, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # ===----------------------------------------------------------------------===
 
-from .alpha     import *
-from .boolean   import *
-from .bytes_    import *
-from .fraction  import *
-from .integer   import *
-from .matrix    import *
-from .omega     import *
-from .procedure import *
-from .relation  import *
-from .sequence  import *
-from .set_      import *
-from .tuple_    import *
-from .unicode_  import *
+"Provides the `Set` abstract base class and type."
+
+__all__ = [
+  'Set',
+  'SetCompatible',
+]
+
+# ===----------------------------------------------------------------------===
+
+# Python standard library, abstract base classes
+from abc import ABCMeta
+
+Set = set
+
+class SetCompatible(object):
+  ""
+  __metaclass__ = ABCMeta
+SetCompatible.register(Set)
 
 # ===----------------------------------------------------------------------===
 # End of File

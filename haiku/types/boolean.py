@@ -33,9 +33,23 @@
 # DOCUMENTATION, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # ===----------------------------------------------------------------------===
 
-"""The Lisp boolean type."""
+"The boolean type, a union type of the constants `True` and `False`."
+
+__all__ = [
+  'Boolean',
+  'BooleanCompatible',
+]
+
+# ===----------------------------------------------------------------------===
+
+# Python standard library, abstract base classes
+from abc import ABCMeta
 
 Boolean = bool
+
+class BooleanCompatible(object):
+  __metaclass__ = ABCMeta
+BooleanCompatible.register(Boolean)
 
 # ===----------------------------------------------------------------------===
 # End of File

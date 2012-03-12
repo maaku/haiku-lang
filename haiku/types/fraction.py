@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# === haiku.types.dictionary ----------------------------------------------===
+# === haiku.types.fraction ------------------------------------------------===
 # Copyright © 2011-2012, RokuSigma Inc. and contributors. See AUTHORS for more
 # details.
 #
@@ -33,10 +33,32 @@
 # DOCUMENTATION, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # ===----------------------------------------------------------------------===
 
-"""A dictionary is an unordered mapping of keys to values. It is most notably
-used to implement keyword arguments in Lisp. Dictionaries map nicely onto the
-Python `dict` type."""
-Dictionary = dict
+"An arbitrary-precision, signed rational numeric type."
+
+__all__ = [
+  'Fraction',
+  'FractionCompatible',
+]
+
+# ===----------------------------------------------------------------------===
+
+# Python standard library, abstract base classes
+from abc import ABCMeta
+
+# The fractions package in the Python standard library provides all the
+# functionality we need of a rational numeric type.
+from fractions import Fraction
+
+# Python standard library, numeric type hierarchy
+import numbers
+
+class FractionCompatible(object):
+  ""
+  __metaclass__ = ABCMeta
+
+# The Python standard library provides a numeric type hierarchy including a
+# rational numeric abstract base class that we can re-purpose to our own ends.
+FractionCompatible.register(numbers.Rational)
 
 # ===----------------------------------------------------------------------===
 # End of File

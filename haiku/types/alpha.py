@@ -34,11 +34,29 @@
 # ===----------------------------------------------------------------------===
 
 """`Alpha` is a conceptual dummy type which is the proper supertype of every
-type except itself, and a proper subtype of none. Within the Python
-interpreter, all types derive from `Alpha`, so `isinstance(value, Alpha)` is
-always true."""
+type except itself, and a proper subtype of none. Within the interpreter and
+API, all types derive from `Alpha`, so `isinstance(value, Alpha)` is always
+true."""
+
+__all__ = [
+  'Alpha',
+  'AlphaCompatible',
+]
+
+# ===----------------------------------------------------------------------===
+
+# Python standard library, abstract base classes
+from abc import ABCMeta
 
 Alpha = object
+
+class AlphaCompatible(object):
+  __metaclass__ = ABCMeta
+
+  # `isinstance(value, AlphaCompatible)` should be true for all Python values:
+  @classmethod
+  def __subclasshook__(cls, subclass):
+    return True
 
 # ===----------------------------------------------------------------------===
 # End of File
