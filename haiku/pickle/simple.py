@@ -279,8 +279,8 @@ class SimpleExpressionPickler(BasePickler):
     # already if we were a valid Python-represented haiku expression. So we
     # can assume the caller passed us something in error and report the
     # problem:
-    raise ValueError, \
-      u"unrecognized input (not a valid expression): '%s'" % repr(expression)
+    raise ValueError, (
+      u"unrecognized input (not a valid expression): '%s'" % repr(expression))
 
   def _tokenize(self, iterable):
     """Takes a `unicode` string or other iterator of Unicode characters and
