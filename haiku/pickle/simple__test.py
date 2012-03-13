@@ -47,111 +47,111 @@ from haiku.pickle import SimpleExpressionPickler
 
 SCENARIOS = [
   # Empty string (edge case):
-  dict(lisp=u'',                      python=[]),
+  dict(lisp=u'',                      python={}),
   
   # Symbols:
-  dict(lisp=u'abc',                   python=['abc']),
-  dict(lisp=u'a b c',                 python=['a','b','c']),
-  dict(lisp=u'#nil',                  python=[''], skip=['load']),
-  dict(lisp=u'(byte-array IA==)',     python=[' '], skip=['load']),
-  dict(lisp=u'(byte-array AA==)',     python=['\0'], skip=['load']),
-  dict(lisp=u'(byte-array AQIDBA==)', python=['\x01\x02\x03\x04'], skip=['load']),
+  dict(lisp=u'abc',                   python={0:'abc'}),
+  dict(lisp=u'a b c',                 python={0:'a',1:'b',2:'c'}),
+  dict(lisp=u'#nil',                  python={0:''}, skip=['load']),
+  dict(lisp=u'[byte-array IA==]',     python={0:' '}, skip=['load']),
+  dict(lisp=u'[byte-array AA==]',     python={0:'\0'}, skip=['load']),
+  dict(lisp=u'[byte-array AQIDBA==]', python={0:'\x01\x02\x03\x04'}, skip=['load']),
   
   # Constants:
-  dict(lisp=u'#nil',                  python=[None]),
-  dict(lisp=u'#f',                    python=[False]),
-  dict(lisp=u'#t',                    python=[True]),
+  dict(lisp=u'#nil',                  python={0:None}),
+  dict(lisp=u'#f',                    python={0:False}),
+  dict(lisp=u'#t',                    python={0:True}),
   
   # Integers:
-  dict(lisp=u'0',                     python=[0L]),
-  dict(lisp=u'1',                     python=[1L]),
-  dict(lisp=u'-1',                    python=[-1L]),
-  dict(lisp=u'36893488147419103232',  python=[long(2**65)]),
-  dict(lisp=u'-36893488147419103232', python=[-long(2**65)]),
+  dict(lisp=u'0',                     python={0:0L}),
+  dict(lisp=u'1',                     python={0:1L}),
+  dict(lisp=u'-1',                    python={0:-1L}),
+  dict(lisp=u'36893488147419103232',  python={0:long(2**65)}),
+  dict(lisp=u'-36893488147419103232', python={0:-long(2**65)}),
   
   # Unicode strings:
-  dict(lisp=u'""',                    python=[u'']),
-  dict(lisp=u'"-"',                   python=[u'-']),
-  dict(lisp=u'"\\""',                 python=[u'"']),
-  dict(lisp=u'"tsch\xfcss!"',         python=[u'tschüss!']),
-  dict(lisp=u'"\u3053\u3093\u306b\u3061\u306f\u4e16\u754c\uff01"', python=[u'こんにちは世界！']),
+  dict(lisp=u'""',                    python={0:u''}),
+  dict(lisp=u'"-"',                   python={0:u'-'}),
+  dict(lisp=u'"\\""',                 python={0:u'"'}),
+  dict(lisp=u'"tsch\xfcss!"',         python={0:u'tschüss!'}),
+  dict(lisp=u'"\u3053\u3093\u306b\u3061\u306f\u4e16\u754c\uff01"', python={0:u'こんにちは世界！'}),
   
   # Lists:
-  dict(lisp=u'()',                    python=[[]]),
-  dict(lisp=u'(a)',                   python=[['a']]),
-  dict(lisp=u'(a b c)',               python=[['a','b','c']]),
-  dict(lisp=u'(1 -2 3)',              python=[[1L,-2L,3L]]),
-  dict(lisp=u'(a (b 1) (c 2))',       python=[['a',['b',1L],['c',2L]]]),
+  dict(lisp=u'[]',                    python={0:{}}),
+  dict(lisp=u'[a]',                   python={0:{0:'a'}}),
+  dict(lisp=u'[a b c]',               python={0:{0:'a',1:'b',2:'c'}}),
+  dict(lisp=u'[1 -2 3]',              python={0:{0:1L,1:-2L,2:3L}}),
+  dict(lisp=u'[a [b 1] [c 2]]',       python={0:{0:'a',1:{0:'b',1:1L},2:{0:'c',1:2L}}}),
   
   # Dictionaries:
-  #dict(lisp=u'(:)',                               python=[{}]),
-  #dict(lisp=u'(: one 1)',                         python=[{'one':1L}]),
-  #dict(lisp=u'(: one 1 : two 2)',                 python=[{'one':1L,'two':2L}]),
-  #dict(lisp=u'(: one 1 : three (+ 1 2) : two 2)', python=[{'one':1L,'two':2L,'three':['+',1L,2L]}]),
+  #dict(lisp=u'[:]',                               python={0:{}}),
+  #dict(lisp=u'[: one 1]',                         python={0:{'one':1L}}),
+  #dict(lisp=u'[: one 1 : two 2]',                 python={0:{'one':1L,'two':2L}}),
+  #dict(lisp=u'[: one 1 : three (+ 1 2) : two 2]', python={0:{'one':1L,'two':2L,'three':['+',1L,2L]}}),
   
   # Integer arithmetic operators:
-  dict(lisp=u'(+ 0 1)',               python=[['+',0L,1L]]),
-  dict(lisp=u'(+ 2 3 4)',             python=[['+',2L,3L,4L]]),
-  dict(lisp=u'(+ 5 6 7 8)',           python=[['+',5L,6L,7L,8L]]),
-  dict(lisp=u'(- 0 1)',               python=[['-',0L,1L]]),
-  dict(lisp=u'(- 2 3 4)',             python=[['-',2L,3L,4L]]),
-  dict(lisp=u'(- 5 6 7 8)',           python=[['-',5L,6L,7L,8L]]),
-  dict(lisp=u'(/ 0 1)',               python=[['/',0L,1L]]),
-  dict(lisp=u'(/ 2 3 4)',             python=[['/',2L,3L,4L]]),
-  dict(lisp=u'(/ 5 6 7 8)',           python=[['/',5L,6L,7L,8L]]),
-  dict(lisp=u'(* 0 1)',               python=[['*',0L,1L]]),
-  dict(lisp=u'(* 2 3 4)',             python=[['*',2L,3L,4L]]),
-  dict(lisp=u'(* 5 6 7 8)',           python=[['*',5L,6L,7L,8L]]),
-  dict(lisp=u'(** 0 8)',              python=[['**',0L,8L]]),
-  dict(lisp=u'(** 1 4)',              python=[['**',1L,4L]]),
-  dict(lisp=u'(** 2 3)',              python=[['**',2L,3L]]),
-  dict(lisp=u'(** 3 3)',              python=[['**',3L,3L]]),
-  dict(lisp=u'(** 7 2 5)',            python=[['**',7L,2L,5L]]),
+  dict(lisp=u'[+ 0 1]',               python={0:{0:'+',1:0L,2:1L}}),
+  dict(lisp=u'[+ 2 3 4]',             python={0:{0:'+',1:2L,2:3L,3:4L}}),
+  dict(lisp=u'[+ 5 6 7 8]',           python={0:{0:'+',1:5L,2:6L,3:7L,4:8L}}),
+  dict(lisp=u'[- 0 1]',               python={0:{0:'-',1:0L,2:1L}}),
+  dict(lisp=u'[- 2 3 4]',             python={0:{0:'-',1:2L,2:3L,3:4L}}),
+  dict(lisp=u'[- 5 6 7 8]',           python={0:{0:'-',1:5L,2:6L,3:7L,4:8L}}),
+  dict(lisp=u'[/ 0 1]',               python={0:{0:'/',1:0L,2:1L}}),
+  dict(lisp=u'[/ 2 3 4]',             python={0:{0:'/',1:2L,2:3L,3:4L}}),
+  dict(lisp=u'[/ 5 6 7 8]',           python={0:{0:'/',1:5L,2:6L,3:7L,4:8L}}),
+  dict(lisp=u'[* 0 1]',               python={0:{0:'*',1:0L,2:1L}}),
+  dict(lisp=u'[* 2 3 4]',             python={0:{0:'*',1:2L,2:3L,3:4L}}),
+  dict(lisp=u'[* 5 6 7 8]',           python={0:{0:'*',1:5L,2:6L,3:7L,4:8L}}),
+  dict(lisp=u'[** 0 8]',              python={0:{0:'**',1:0L,2:8L}}),
+  dict(lisp=u'[** 1 4]',              python={0:{0:'**',1:1L,2:4L}}),
+  dict(lisp=u'[** 2 3]',              python={0:{0:'**',1:2L,2:3L}}),
+  dict(lisp=u'[** 3 3]',              python={0:{0:'**',1:3L,2:3L}}),
+  dict(lisp=u'[** 7 2 5]',            python={0:{0:'**',1:7L,2:2L,3:5L}}),
   
   # Logical operators:
-  dict(lisp=u'(& #f #f)',             python=[['&',False,False]]),
-  dict(lisp=u'(& #f #t)',             python=[['&',False, True]]),
-  dict(lisp=u'(& #t #f)',             python=[['&', True,False]]),
-  dict(lisp=u'(& #t #t)',             python=[['&', True, True]]),
-  dict(lisp=u'(| #f #f)',             python=[['|',False,False]]),
-  dict(lisp=u'(| #f #t)',             python=[['|',False, True]]),
-  dict(lisp=u'(| #t #f)',             python=[['|', True,False]]),
-  dict(lisp=u'(| #t #t)',             python=[['|', True, True]]),
-  dict(lisp=u'(^ #f #f)',             python=[['^',False,False]]),
-  dict(lisp=u'(^ #f #t)',             python=[['^',False, True]]),
-  dict(lisp=u'(^ #t #f)',             python=[['^', True,False]]),
-  dict(lisp=u'(^ #t #t)',             python=[['^', True, True]]),
-  dict(lisp=u'(~ #f)',                python=[['~',False]]),
-  dict(lisp=u'(~ #t)',                python=[['~', True]]),
+  dict(lisp=u'[& #f #f]',             python={0:{0:'&',1:False,2:False}}),
+  dict(lisp=u'[& #f #t]',             python={0:{0:'&',1:False,2: True}}),
+  dict(lisp=u'[& #t #f]',             python={0:{0:'&',1: True,2:False}}),
+  dict(lisp=u'[& #t #t]',             python={0:{0:'&',1: True,2: True}}),
+  dict(lisp=u'[| #f #f]',             python={0:{0:'|',1:False,2:False}}),
+  dict(lisp=u'[| #f #t]',             python={0:{0:'|',1:False,2: True}}),
+  dict(lisp=u'[| #t #f]',             python={0:{0:'|',1: True,2:False}}),
+  dict(lisp=u'[| #t #t]',             python={0:{0:'|',1: True,2: True}}),
+  dict(lisp=u'[^ #f #f]',             python={0:{0:'^',1:False,2:False}}),
+  dict(lisp=u'[^ #f #t]',             python={0:{0:'^',1:False,2: True}}),
+  dict(lisp=u'[^ #t #f]',             python={0:{0:'^',1: True,2:False}}),
+  dict(lisp=u'[^ #t #t]',             python={0:{0:'^',1: True,2: True}}),
+  dict(lisp=u'[~ #f]',                python={0:{0:'~',1:False}}),
+  dict(lisp=u'[~ #t]',                python={0:{0:'~',1: True}}),
   
   # Relational operators:
-  dict(lisp=u'(< 0 0)',               python=[[ '<',0L,0L]]),
-  dict(lisp=u'(< 0 1)',               python=[[ '<',0L,1L]]),
-  dict(lisp=u'(< 1 0)',               python=[[ '<',1L,0L]]),
-  dict(lisp=u'(< 1 1)',               python=[[ '<',1L,1L]]),
-  dict(lisp=u'(<= 0 0)',              python=[['<=',0L,0L]]),
-  dict(lisp=u'(<= 0 1)',              python=[['<=',0L,1L]]),
-  dict(lisp=u'(<= 1 0)',              python=[['<=',1L,0L]]),
-  dict(lisp=u'(<= 1 1)',              python=[['<=',1L,1L]]),
-  dict(lisp=u'(= 0 0)',               python=[[ '=',0L,0L]]),
-  dict(lisp=u'(= 0 1)',               python=[[ '=',0L,1L]]),
-  dict(lisp=u'(= 1 0)',               python=[[ '=',1L,0L]]),
-  dict(lisp=u'(= 1 1)',               python=[[ '=',1L,1L]]),
-  dict(lisp=u'(>= 0 0)',              python=[['>=',0L,0L]]),
-  dict(lisp=u'(>= 0 1)',              python=[['>=',0L,1L]]),
-  dict(lisp=u'(>= 1 0)',              python=[['>=',1L,0L]]),
-  dict(lisp=u'(>= 1 1)',              python=[['>=',1L,1L]]),
-  dict(lisp=u'(> 0 0)',               python=[[ '>',0L,0L]]),
-  dict(lisp=u'(> 0 1)',               python=[[ '>',0L,1L]]),
-  dict(lisp=u'(> 1 0)',               python=[[ '>',1L,0L]]),
-  dict(lisp=u'(> 1 1)',               python=[[ '>',1L,1L]]),
-  dict(lisp=u'(~= 0 0)',              python=[['~=',0L,0L]]),
-  dict(lisp=u'(~= 0 1)',              python=[['~=',0L,1L]]),
-  dict(lisp=u'(~= 1 0)',              python=[['~=',1L,0L]]),
-  dict(lisp=u'(~= 1 1)',              python=[['~=',1L,1L]]),
+  dict(lisp=u'[< 0 0]',               python={0:{0: '<',1:0L,2:0L}}),
+  dict(lisp=u'[< 0 1]',               python={0:{0: '<',1:0L,2:1L}}),
+  dict(lisp=u'[< 1 0]',               python={0:{0: '<',1:1L,2:0L}}),
+  dict(lisp=u'[< 1 1]',               python={0:{0: '<',1:1L,2:1L}}),
+  dict(lisp=u'[<= 0 0]',              python={0:{0:'<=',1:0L,2:0L}}),
+  dict(lisp=u'[<= 0 1]',              python={0:{0:'<=',1:0L,2:1L}}),
+  dict(lisp=u'[<= 1 0]',              python={0:{0:'<=',1:1L,2:0L}}),
+  dict(lisp=u'[<= 1 1]',              python={0:{0:'<=',1:1L,2:1L}}),
+  dict(lisp=u'[= 0 0]',               python={0:{0: '=',1:0L,2:0L}}),
+  dict(lisp=u'[= 0 1]',               python={0:{0: '=',1:0L,2:1L}}),
+  dict(lisp=u'[= 1 0]',               python={0:{0: '=',1:1L,2:0L}}),
+  dict(lisp=u'[= 1 1]',               python={0:{0: '=',1:1L,2:1L}}),
+  dict(lisp=u'[>= 0 0]',              python={0:{0:'>=',1:0L,2:0L}}),
+  dict(lisp=u'[>= 0 1]',              python={0:{0:'>=',1:0L,2:1L}}),
+  dict(lisp=u'[>= 1 0]',              python={0:{0:'>=',1:1L,2:0L}}),
+  dict(lisp=u'[>= 1 1]',              python={0:{0:'>=',1:1L,2:1L}}),
+  dict(lisp=u'[> 0 0]',               python={0:{0: '>',1:0L,2:0L}}),
+  dict(lisp=u'[> 0 1]',               python={0:{0: '>',1:0L,2:1L}}),
+  dict(lisp=u'[> 1 0]',               python={0:{0: '>',1:1L,2:0L}}),
+  dict(lisp=u'[> 1 1]',               python={0:{0: '>',1:1L,2:1L}}),
+  dict(lisp=u'[~= 0 0]',              python={0:{0:'~=',1:0L,2:0L}}),
+  dict(lisp=u'[~= 0 1]',              python={0:{0:'~=',1:0L,2:1L}}),
+  dict(lisp=u'[~= 1 0]',              python={0:{0:'~=',1:1L,2:0L}}),
+  dict(lisp=u'[~= 1 1]',              python={0:{0:'~=',1:1L,2:1L}}),
   
   # String operators:
-  dict(lisp=u'(+ "Hello, " "world!")', python=[['+',u"Hello, ",u"world!"]]),
+  dict(lisp=u'[+ "Hello, " "world!"]', python={0:{0:'+',1:u"Hello, ",2:u"world!"}}),
 ]
 
 class TestSimpleExpressionPickler(unittest2.TestCase):
@@ -169,8 +169,10 @@ class TestSimpleExpressionPickler(unittest2.TestCase):
         self.skipTest(u"Scenario not compatible with pickle.dump(); skipping...")
       # Compare dump(StringIO) vs the prepared Lisp:
       ostream = StringIO()
-      self.pickler.dump(ostream, *python)
-      self.assertEqual(lisp, ostream.getvalue().decode('utf-8'))
+      self.pickler.dump(ostream, python)
+      self.assertEqual(
+        u"".join([u"[", lisp, u"]"]),
+        ostream.getvalue().decode('utf-8'))
   class test_dump_utf_16(ScenarioTest):
     scenarios = SCENARIOS
     def __test__(self, lisp, python, skip=[]):
@@ -179,8 +181,10 @@ class TestSimpleExpressionPickler(unittest2.TestCase):
         self.skipTest(u"Scenario not compatible with pickle.dump(); skipping...")
       # Compare dump(StringIO) vs the prepared Lisp:
       ostream = StringIO()
-      self.pickler.dump(ostream, *python, encoding='utf-16')
-      self.assertEqual(lisp, ostream.getvalue().decode('utf-16'))
+      self.pickler.dump(ostream, python, encoding='utf-16')
+      self.assertEqual(
+        u"".join([u"[", lisp, u"]"]),
+        ostream.getvalue().decode('utf-16'))
   class test_dumps(ScenarioTest):
     scenarios = SCENARIOS
     def __test__(self, lisp, python, skip=[]):
@@ -188,7 +192,9 @@ class TestSimpleExpressionPickler(unittest2.TestCase):
       if 'dump' in skip:
         self.skipTest(u"Scenario not compatible with pickle.dump(); skipping...")
       # Compare dumps() vs the prepared Lisp:
-      self.assertEqual(lisp, self.pickler.dumps(*python))
+      self.assertEqual(
+        u"".join([u"[", lisp, u"]"]),
+        self.pickler.dumps(python))
   class test_load(ScenarioTest):
     scenarios = SCENARIOS
     def __test__(self, lisp, python, skip=[]):
