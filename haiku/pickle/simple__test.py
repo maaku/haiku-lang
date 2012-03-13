@@ -163,7 +163,8 @@ class TestSimpleExpressionPickler(unittest2.TestCase):
     self.pickler = self._pickler()
   class test_dump(ScenarioTest):
     scenarios = SCENARIOS
-    def __test__(self, lisp, python, skip=[]):
+    def __test__(self, lisp, python, skip=None):
+      skip = skip or []
       # Check if it is okay to run this scenario:
       if 'dump' in skip:
         self.skipTest(u"Scenario not compatible with pickle.dump(); skipping...")
@@ -175,7 +176,8 @@ class TestSimpleExpressionPickler(unittest2.TestCase):
         ostream.getvalue().decode('utf-8'))
   class test_dump_utf_16(ScenarioTest):
     scenarios = SCENARIOS
-    def __test__(self, lisp, python, skip=[]):
+    def __test__(self, lisp, python, skip=None):
+      skip = skip or []
       # Check if it is okay to run this scenario:
       if 'dump' in skip:
         self.skipTest(u"Scenario not compatible with pickle.dump(); skipping...")
@@ -187,7 +189,8 @@ class TestSimpleExpressionPickler(unittest2.TestCase):
         ostream.getvalue().decode('utf-16'))
   class test_dumps(ScenarioTest):
     scenarios = SCENARIOS
-    def __test__(self, lisp, python, skip=[]):
+    def __test__(self, lisp, python, skip=None):
+      skip = skip or []
       # Check if it is okay to run this scenario:
       if 'dump' in skip:
         self.skipTest(u"Scenario not compatible with pickle.dump(); skipping...")
@@ -197,7 +200,8 @@ class TestSimpleExpressionPickler(unittest2.TestCase):
         self.pickler.dumps(python))
   class test_load(ScenarioTest):
     scenarios = SCENARIOS
-    def __test__(self, lisp, python, skip=[]):
+    def __test__(self, lisp, python, skip=None):
+      skip = skip or []
       # Check if it is okay to run this scenario:
       if 'load' in skip:
         self.skipTest(u"Scenario not compatible with pickle.load(); skipping...")
@@ -207,7 +211,8 @@ class TestSimpleExpressionPickler(unittest2.TestCase):
       self.assertEqual(actual, python)
   class test_load_utf_16(ScenarioTest):
     scenarios = SCENARIOS
-    def __test__(self, lisp, python, skip=[]):
+    def __test__(self, lisp, python, skip=None):
+      skip = skip or []
       # Check if it is okay to run this scenario:
       if 'load' in skip:
         self.skipTest(u"Scenario not compatible with pickle.load(); skipping...")
@@ -217,7 +222,8 @@ class TestSimpleExpressionPickler(unittest2.TestCase):
       self.assertEqual(actual, python)
   class test_loads(ScenarioTest):
     scenarios = SCENARIOS
-    def __test__(self, lisp, python, skip=[]):
+    def __test__(self, lisp, python, skip=None):
+      skip = skip or []
       # Check if it is okay to run this scenario:
       if 'load' in skip:
         self.skipTest(u"Scenario not compatible with pickle.load(); skipping...")
