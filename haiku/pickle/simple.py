@@ -290,11 +290,7 @@ class SimpleExpressionPickler(BasePickler):
     # The approach we take is that of a DFA (deterministic finite automaton),
     # a type of state machine. The five constants below are used to indicate
     # which state we are in.
-    INITIAL  = 0
-    SYMBOL   = 1
-    CONSTANT = 2
-    NUMBER   = 3
-    UNICODE  = 4
+    INITIAL, COMMENT, SYMBOL, CONSTANT, NUMBER, UNICODE = range(6)
 
     # The Unicode characters used for parenthetical syntax (tuples, evaluated
     # data, and sequences):
@@ -318,7 +314,6 @@ class SimpleExpressionPickler(BasePickler):
     # The Unicode characters which can be used to begin and end a Unicode
     # string literal:
     unicodemap = {
-      u'\'': set([u'\'']),
       u'"':  set([u'"']),
       u'”':  set([u'„', u'“', u'”']),
       u'’':  set([u'‚', u'‘', u'’']),
@@ -329,8 +324,8 @@ class SimpleExpressionPickler(BasePickler):
       u'「':  set([u'」']),
       u'『':  set([u'』']),
     }
-    unicodeopen  = set(unicodemap.keys())
-    unicodeclose = reduce(lambda l,r:l.union(r), unicodemap.values())
+    unicodeopen  = reduce(lambda l,r:l.union(r), unicodemap.values())
+    unicodeclose = set(unicodemap.keys())
 
     # The five special syntax characters for key/value mapping, quoting and
     # unquoting special forms, and constant values.
@@ -400,7 +395,11 @@ class SimpleExpressionPickler(BasePickler):
           state, value = CONSTANT, u"" # Pass-through to CONSTANT handler below
 
         # Transition to states handling symbols and numeric types:
-        elif c in self.ID_INITIAL:
+        # Transition to state handling line comments:
+        elif c in comment_indicator:
+          state, initial = COMMENT, state; continue
+
+        elif c in self.SYMBOL_INITIAL:
           # Handle the special case of number prefixed with +/- sign:
           if c in self.INTEGER_INITIAL and n in self.INTEGER_SUBSEQUENT:
             state, value = NUMBER, c # Pass-through to NUMBER handler below
@@ -410,8 +409,13 @@ class SimpleExpressionPickler(BasePickler):
         elif c in self.INTEGER_INITIAL:
           state, value = NUMBER, c # Pass-through to NUMBER handler below
 
+      # Comments are easy: eat whitespace until newline is reached
+      if COMMENT == state:
+        if len(u"".join([c, u"a"]).splitlines()) > 1:
+          state, initial = initial, u""
+
       # Generally constants and symbols are treated similarly--they both read
-      # in an identiier and yield. However whitespace is allowed between the 
+      # in an identiier and yield. However whitespace is allowed between the
       # constant indicator and the name of the constant. Here we skip past
       # that whitespace:
       if CONSTANT == state and not len(value):
@@ -419,14 +423,16 @@ class SimpleExpressionPickler(BasePickler):
           raise self.TokenError, (
             u"unexpected end-of-file before constant identifier")
         elif not len(n.strip()):   continue
-        elif n in self.ID_INITIAL: value+=n; continue
+        elif n in self.SYMBOL_INITIAL: value+=n; continue
         else:
+          if n in comment_indicator:
+            state, initial = COMMENT, state; continue
           raise self.TokenError, (
             u"unexpected character: %s; expected constant identifier" % repr(n))
 
       if state in (SYMBOL, CONSTANT):
-        # Fill until n not in ID_SUBSEQUENT:
-        if n is not None and len(n.strip()) and n in self.ID_SUBSEQUENT:
+        # Fill until n not in SYMBOL_SUBSEQUENT:
+        if n is not None and len(n.strip()) and n in self.SYMBOL_SUBSEQUENT:
           value += n; continue
         # Then reset DFA, process, and yield:
         else:
@@ -454,15 +460,23 @@ class SimpleExpressionPickler(BasePickler):
           raise self.TokenError, (
             u"unexpected end-of-file within unicode string")
         elif c in unicodeclose and initial in unicodemap[c] and not count%2:
-          state = INITIAL; yield (self.TOKEN_LITERAL, Unicode(value.replace('\\"','"'))); continue
+          state = INITIAL; yield (
+            self.TOKEN_LITERAL,
+            Unicode(value.replace(u'\\"',u'"'))); continue
         if c == u"\\": count += 1
         else:          count  = 0
-        value += unicode(c); continue
+        if not (c == u"\\" and (n == u"\\" or initial in unicodemap.get(n, ())) and count%2):
+          value += unicode(c)
+        continue
 
     if len(parens):
       raise self.TokenError, (
         u"unexpected end-of-file with unmatched opening/closing syntax: "
         u"%s" % u", ".join(repr(x) for x in parens))
+
+    if COMMENT == state:
+      raise self.TokenError, (
+        u"unexpected end-of-file within comment")
 
     # If we've made it this far, then we've exhausted the input, and are not
     # in a state of expecting more input. As a generator we signal that we are
