@@ -39,8 +39,14 @@ from binascii import b2a_base64
 # Python standard library, iteration tools
 from itertools import count, izip
 
+# Python standard library, intrinsic operators
+from operator import mul
+
 # Python patterns, lookahead generator
 from python_patterns.itertools import lookahead
+
+# LEPL: Recursive descent parser for Python applications
+import lepl
 
 # Haiku language, type definitions
 from haiku.types import *
@@ -88,27 +94,30 @@ class SimpleExpressionPickler(BasePickler):
   CONSTANT_INDICATOR      = u"#"
   COMMENT_INDICATOR       = u";"
 
+  QUOTE_PROCEDURE          = 'quote'
+  UNQUOTE_PROCEDURE        = 'unquote'
+  UNQUOTE_SPLICE_PROCEDURE = 'unquote-splice'
+
   # Integers are one or more decimal digits, optionally starting with either a
   # plus or minus sign. (Note: there cannot be any whitespace between the +/-
   # sign and the digits, or else the sign will be misinterpreted as an
   # identifier.)
-  INTEGER_INITIAL    = u"0123456789+-"
-  INTEGER_SUBSEQUENT = u"0123456789"
+  INTEGER_SIGN_POSITIVE = set([u"+"])
+  INTEGER_SIGN_NEGATIVE = set([u"-"])
+  INTEGER_SIGN          = INTEGER_SIGN_POSITIVE.union(INTEGER_SIGN_NEGATIVE)
+  INTEGER_DIGIT         = set(u"0123456789")
+  INTEGER_SEPARATOR     = set(u"_")
 
   # Identifiers include what in most other languages would be considered
-  # symbols/operators. Aside from some select punctuation, it's pretty much
-  # anything-goes with respect to non-whitespace, non-control ASCII
-  # characters.
-  ID_INITIAL    = u"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!?*+-/%\\&|^~<=>"
-  ID_SUBSEQUENT = ID_INITIAL + INTEGER_SUBSEQUENT
-
-  # In the case of syntax, there is ambiguity in the result of the tokenizer.
-  # Is `u":"` a Unicode string or the association operator? For that reason
-  # the tokenizer returns a 2-tuple, with the first element specifying the
-  # type (literal or syntax), and the second is the actual literal/syntax
-  # value.
-  TOKEN_LITERAL = 0
-  TOKEN_SYNTAX  = 1
+  # operator syntax, and are collectively here called ‘symbols’. Aside from
+  # some select punctuation, it's pretty much anything-goes with respect to
+  # non-whitespace, non-control ASCII characters.
+  #
+  # Note: this has the unintuitive consequence that u"a+b" parses as the
+  #   single symbol 'a+b', and as one might expect the separate symbols 'a',
+  #   '+', and 'b'. Whitespace is not optional in this case.
+  SYMBOL_INITIAL    = set(u"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!?*+-/%\\&|^_~<=>")
+  SYMBOL_SUBSEQUENT = SYMBOL_INITIAL.union(INTEGER_DIGIT)
 
   def dump(self, ostream, *args, **kwargs):
     """Serializes a Python-represented haiku expression into simple-expression
@@ -155,24 +164,14 @@ class SimpleExpressionPickler(BasePickler):
     expression = istream.read().decode(encoding)
     return self.loads(expression, **kwargs)
 
-  def loads(self, *args):
+  def loads(self, expression):
     """Deserializes a haiku expression from a Unicode represented string in
     “Simple Expression” notation to Python objects."""
-    # `loads()` is allowed an infinite number of positional arguemnts, each of
-    # which must be a simple expression Unicode string. These are converted
-    # into Python objects, then combined together into a single Tuple.
-    if len(args) < 1:
-      return {}
-    elif len(args) > 1:
-      return Tuple([izip(count(), (self.loads(arg) for arg in args))])
-    # Otherwise only one positional arguement is given, and our task is to
-    # convert it to Python objects from s-expression notation.
-    expression = args[0]
-
-    return self._parse(self._tokenize(args[0]))
+    return self._matcher.parse(expression)
 
   def _serialize(self, expression):
-    ""
+    """Translates a Python-represented haiku expression into a Unicode string
+    in “Simple Expression” notation."""
     # None/nil/omega value:
     if isinstance(expression, OmegaCompatible):
       return u"".join([self.CONSTANT_INDICATOR, u"nil"])
@@ -191,17 +190,14 @@ class SimpleExpressionPickler(BasePickler):
     # Rational numeric literals:
     elif isinstance(expression, FractionCompatible):
       return u"".join([
-        self.TUPLE_OPEN,
-        u" ".join([
-          u"rational",
-          self.dumps(expression.numerator),
-          self.dumps(expression.denominator),
-        ]),
-        self.TUPLE_CLOSE])
+        self.dumps(expression.numerator),
+        u"/",
+        self.dumps(expression.denominator)])
 
     # Unicode literals:
     elif isinstance(expression, UnicodeCompatible):
-      return u"".join([u'"', expression.replace(u'"',u'\\"'), u'"'])
+      return u"".join([u'"', expression.encode('unicode_escape')
+                                       .replace(u"\"",u"\\\""), u'"'])
 
     # Byte-array literals:
     elif isinstance(expression, BytesCompatible):
@@ -211,8 +207,8 @@ class SimpleExpressionPickler(BasePickler):
 
       # A byte-array that meets the definition of an identifier is embedded
       # directly:
-      if expression[0] in self.ID_INITIAL:
-        if all(c in self.ID_SUBSEQUENT for c in expression[1:]):
+      if expression[0] in self.SYMBOL_INITIAL:
+        if all(c in self.SYMBOL_SUBSEQUENT for c in expression[1:]):
           return unicode(expression)
 
       # All other byte-arrays are Base64-encoded:
@@ -235,6 +231,25 @@ class SimpleExpressionPickler(BasePickler):
 
     # Tuples(/maps/dictionaries):
     elif isinstance(expression, TupleCompatible):
+      special_pattern = lambda expr:(
+        len(expr) == 2 and set(expr.keys()) == set(range(2)))
+      # Output special forms:
+      if special_pattern(expression):
+        if expression[0] == self.QUOTE_PROCEDURE:
+          #if (isinstance(expression[1], TupleCompatible) and
+          #    all(special_pattern(expression[1][key]) and
+          #        expression[1][key][0] == self.UNQUOTE_PROCEDURE
+          #        for key in expression[1].keys())):
+          #  return u"".join([
+          #    self.EVAL_DATA_OPEN,
+          #    self.dumps(expression[1]),
+          #    self.EVAL_DATA_CLOSE])
+          return u"".join([self.QUOTE_OPERATOR, self.dumps(expression[1])])
+        if expression[0] == self.UNQUOTE_PROCEDURE:
+          return u"".join([self.UNQUOTE_OPERATOR, self.dumps(expression[1])])
+        if expression[0] == self.UNQUOTE_SPLICE_PROCEDURE:
+          return u"".join([self.UNQUOTE_SPLICE_OPERATOR, self.dumps(expression[1])])
+
       args = []
       kwargs = Tuple(expression)
       kwargs_keys = kwargs.keys()
@@ -282,310 +297,161 @@ class SimpleExpressionPickler(BasePickler):
     raise ValueError, (
       u"unrecognized input (not a valid expression): '%s'" % repr(expression))
 
-  def _tokenize(self, iterable):
-    """Takes a `unicode` string or other iterator of Unicode characters and
-    divides it into lexicographical tokens. Acts as a generator returning
-    2-tuples identifying the type of the token (syntax vs. literal) and the
-    token value."""
-    # The approach we take is that of a DFA (deterministic finite automaton),
-    # a type of state machine. The five constants below are used to indicate
-    # which state we are in.
-    INITIAL, COMMENT, SYMBOL, CONSTANT, NUMBER, UNICODE = range(6)
+  def __init__(self, *args, **kwargs):
+    "Sets up a parser using the LEPL package."
+    super(SimpleExpressionPickler, self).__init__(*args, **kwargs)
 
-    # The Unicode characters used for parenthetical syntax (tuples, evaluated
-    # data, and sequences):
-    parens               = []
-    parenopen_tuple      = set([u'['])
-    parenopen_eval_data  = set([u'{'])
-    parenopen_sequence   = set([u'('])
-    parenopen            = parenopen_sequence.union(
-                             parenopen_eval_data.union(parenopen_tuple))
-    parenclose_tuple     = set([u']'])
-    parenclose_eval_data = set([u'}'])
-    parenclose_sequence  = set([u')'])
-    parenclose           = parenclose_sequence.union(
-                             parenclose_eval_data.union(parenclose_tuple))
-    parenmap = {
-      u']': set([u'[']),
-      u'}': set([u'{']),
-      u')': set([u'(']),
-    }
+    # “Whitespace” is any formatting characters (spaces, newlines, comments,
+    # etc.) which are used to separate tokens, but are not represented except
+    # implicitly in the Python representation.
+    # FIXME: add support for any Unicode whitespace or newline character
+    Whitespace = (lepl.Any(u"\t\n\u000b\u000c\r ") |
+      (lepl.Literal(u";") &
+       lepl.AnyBut(lepl.Newline())[0:] &
+       (lepl.Newline() | lepl.Lookahead(lepl.Eos()))))
 
-    # The Unicode characters which can be used to begin and end a Unicode
-    # string literal:
-    unicodemap = {
-      u'"':  set([u'"']),
-      u'”':  set([u'„', u'“', u'”']),
-      u'’':  set([u'‚', u'‘', u'’']),
-      u'»':  set([u'«', u'»']),
-      u'«':  set([u'«', u'»']),
-      u'‹':  set([u'‹', u'›']),
-      u'›':  set([u'‹', u'›']),
-      u'「':  set([u'」']),
-      u'『':  set([u'』']),
-    }
-    unicodeopen  = reduce(lambda l,r:l.union(r), unicodemap.values())
-    unicodeclose = set(unicodemap.keys())
+    # Symbols are a stand-in type for both identifiers and operators (<, =, &,
+    # etc.).
+    # FIXME: add support for hex strings a la D
+    _Symbol = lambda lexemes:Bytes(u"".join(lexemes).encode('utf-8'))
+    Symbol = (
+      lepl.Any(self.SYMBOL_INITIAL) &
+      lepl.Any(self.SYMBOL_SUBSEQUENT)[0:]) > _Symbol
 
-    # The five special syntax characters for key/value mapping, quoting and
-    # unquoting special forms, and constant values.
-    association_operator    = set([u':'])
-    quote_operator          = set([u"'"])
-    unquote_operator        = set([u","])
-    unquote_splice_operator = set([u"`"])
-    constant_indicator      = set([u'#'])
+    # FIXME: add support for binary, octal, hex, and perhaps other integer
+    #   representations
+    _UnsignedInteger = lambda lexemes:Integer(u"".join(
+      filter(
+        lambda lexeme:lexeme not in self.INTEGER_SEPARATOR,
+        lexemes)))
+    UnsignedInteger = (
+        lepl.Any(self.INTEGER_DIGIT) |
+        lepl.Any(self.INTEGER_SEPARATOR)
+      )[1:] > _UnsignedInteger
 
-    # Line comments/documentation:
-    comment_indicator = set([u';'])
+    _IntegerSign = (lambda lexeme:
+      lexeme in self.INTEGER_SIGN_NEGATIVE and Integer(-1)
+                                            or Integer(1))
+    IntegerSign = lepl.Any(self.INTEGER_SIGN) >> _IntegerSign
 
-    # Set the initial state of the DFA:
-    value   = u""
-    count   = 0
-    initial = u""
-    state   = INITIAL
-    # For the purposes of this DFA implementation, it is sufficient to look
-    # at the current and next lexigraphical element only. We use the Python-
-    # patterns `lookahead` generator to help us out here:
-    for c,n in lookahead(iterable):
-      if state == INITIAL:
-        # Remove whitespace from consideration:
-        if not len(c.strip()): continue
+    _SignedInteger = lambda parts:reduce(mul, parts)
+    SignedInteger = (
+      lepl.Optional(IntegerSign) &
+      UnsignedInteger) > _SignedInteger
 
-        # Handle the various single-character syntax operators:
-        elif c in association_operator:    yield (self.TOKEN_SYNTAX, self.ASSOCIATION_OPERATOR);    continue
-        elif c in quote_operator:          yield (self.TOKEN_SYNTAX, self.QUOTE_OPERATOR);          continue
-        elif c in unquote_operator:        yield (self.TOKEN_SYNTAX, self.UNQUOTE_OPERATOR);        continue
-        elif c in unquote_splice_operator: yield (self.TOKEN_SYNTAX, self.UNQUOTE_SPLICE_OPERATOR); continue
+    Integral = SignedInteger
 
-        # Transition to states handling sequential, nested syntaxes (maps,
-        # evaluated data, sequences):
-        elif c in parenopen:
-          if   c in parenopen_tuple:     token = self.TUPLE_OPEN
-          elif c in parenopen_eval_data: token = self.EVAL_DATA_OPEN
-          elif c in parenopen_sequence:  token = self.SEQUENCE_OPEN
-          else:
-            raise self.TokenError, (
-              u"internal error: unexpected matched opening syntax: "
-              u"%s" % repr(c))
-          parens.append(c); yield (self.TOKEN_SYNTAX, token); continue
-        elif c in parenclose:
-          if   c in parenclose_tuple:     token = self.TUPLE_CLOSE
-          elif c in parenclose_eval_data: token = self.EVAL_DATA_CLOSE
-          elif c in parenclose_sequence:  token = self.SEQUENCE_CLOSE
-          else:
-            raise self.TokenError, (
-              u"internal error: unexpected matched closing syntax: "
-              u"%s" % repr(c))
-          if not parens:
-            raise self.TokenError, (
-              u"unexpected closing syntax at top level: %s" % repr(c))
-          if parens[-1] not in parenmap[c]:
-            raise self.TokenError, (
-              u"mismatched opening and closing syntax: "
-              u"%s does not match %s" % (repr(parens[-1]), repr(c)))
-          parens = parens[:-1]
-          yield (self.TOKEN_SYNTAX, token); continue
+    # Rational literals must not include any whitespace between the numerator,
+    # the divider, and the denominator, otherwise the grammer would be
+    # ambiguous.
+    # FIXME: consider supporting decimal literals as fractions
+    _Rational = lambda args:Fraction(*args)
+    Rational = (
+      SignedInteger &
+      ~lepl.Literal(u"/") &
+      UnsignedInteger) > _Rational
 
-        # Transition to state handling Unicode string:
-        elif c in unicodeopen:
-          state, value, count, initial = UNICODE, u"", 0, c; continue
+    # We rely upon Python's Unicode escape capability for parsing Unicode
+    # strings:
+    # FIXME: consider supporting smart quotes and any other Unicode quote
+    #   pairings.
+    _UnicodeString = lambda args:args and Unicode(*args).decode('unicode_escape') or Unicode(u"")
+    UnicodeString = lepl.String(quote=u'"', escape=u"\\") > _UnicodeString
 
-        # Transition to state handling named constants:
-        elif c in constant_indicator:
-          state, value = CONSTANT, u"" # Pass-through to CONSTANT handler below
+    # Whitespace is *not* required between tokens, as long as it does not
+    # result in any ambiguity.
+    with lepl.Separator(~Whitespace[0:]):
+      # Expression is used recursively, so we declare it up front without
+      # being required to define it:
+      Expression = lepl.Delayed()
 
-        # Transition to states handling symbols and numeric types:
-        # Transition to state handling line comments:
-        elif c in comment_indicator:
-          state, initial = COMMENT, state; continue
+      # Named constants are used for the `Omega` value (nil/None), and the
+      # Boolean values `True` and `False`.
+      def _Constant(symbol):
+        symbol = symbol.lower()
+        if symbol in ('nil',):
+          return Omega()
+        if symbol in ('f','false'):
+          return Boolean(False)
+        if symbol in ('t','true'):
+          return Boolean(True)
+        raise self.TokenError, (
+          u"unrecognized constant name: %s" % repr(symbol))
+      Constant = (~lepl.Literal(u"#") & Symbol) >> _Constant
 
-        elif c in self.SYMBOL_INITIAL:
-          # Handle the special case of number prefixed with +/- sign:
-          if c in self.INTEGER_INITIAL and n in self.INTEGER_SUBSEQUENT:
-            state, value = NUMBER, c # Pass-through to NUMBER handler below
-          # Otherwise it's an identifer for sure:
-          else:
-            state, value = SYMBOL, c # Pass-through to SYMBOL handler below
-        elif c in self.INTEGER_INITIAL:
-          state, value = NUMBER, c # Pass-through to NUMBER handler below
+      # Special forms for quoting:
+      _QuoteSyntax = lambda expr:Tuple([(0, self.QUOTE_PROCEDURE), (1, expr)])
+      QuoteSyntax = (~lepl.Literal(self.QUOTE_OPERATOR) & Expression) >> _QuoteSyntax
 
-      # Comments are easy: eat whitespace until newline is reached
-      if COMMENT == state:
-        if len(u"".join([c, u"a"]).splitlines()) > 1:
-          state, initial = initial, u""
+      _UnquoteSyntax = lambda expr:Tuple([(0, self.UNQUOTE_PROCEDURE), (1, expr)])
+      UnquoteSyntax = (~lepl.Literal(self.UNQUOTE_OPERATOR) & Expression) >> _UnquoteSyntax
 
-      # Generally constants and symbols are treated similarly--they both read
-      # in an identiier and yield. However whitespace is allowed between the
-      # constant indicator and the name of the constant. Here we skip past
-      # that whitespace:
-      if CONSTANT == state and not len(value):
-        if n is None:
-          raise self.TokenError, (
-            u"unexpected end-of-file before constant identifier")
-        elif not len(n.strip()):   continue
-        elif n in self.SYMBOL_INITIAL: value+=n; continue
-        else:
-          if n in comment_indicator:
-            state, initial = COMMENT, state; continue
-          raise self.TokenError, (
-            u"unexpected character: %s; expected constant identifier" % repr(n))
+      _UnquoteSpliceSyntax = lambda expr:Tuple([(0, self.UNQUOTE_SPLICE_PROCEDURE), (1, expr)])
+      UnquoteSpliceSyntax = (~lepl.Literal(self.UNQUOTE_SPLICE_OPERATOR) & Expression) >> _UnquoteSyntax
 
-      if state in (SYMBOL, CONSTANT):
-        # Fill until n not in SYMBOL_SUBSEQUENT:
-        if n is not None and len(n.strip()) and n in self.SYMBOL_SUBSEQUENT:
-          value += n; continue
-        # Then reset DFA, process, and yield:
-        else:
-          if SYMBOL == state:
-            yield (self.TOKEN_LITERAL, Bytes(value.encode('utf-8')))
-          elif CONSTANT == state:
-            if   value == u"nil": yield (self.TOKEN_LITERAL, None)
-            elif value == u"f":   yield (self.TOKEN_LITERAL, False)
-            elif value == u"t":   yield (self.TOKEN_LITERAL, True)
-            else:
-              raise self.TokenError, (
-                u"unrecognized constant name: %s" % repr(value))
-          state = INITIAL; continue
+      # A keyword expression is a component of the tuple definition: a mapping
+      # of one data to another (the key/value pair).
+      _KeywordExpression = lambda parts:len(parts)-1 and tuple(parts) or parts[0]
+      KeywordExpression = ((
+        Expression &
+        ~lepl.Literal(self.ASSOCIATION_OPERATOR) &
+        Expression) | Expression) > _KeywordExpression
 
-      if state == NUMBER:
-        # Fill until n not in INTEGER_SUBSEQUENT:
-        if n is not None and len(n.strip()) and n in self.INTEGER_SUBSEQUENT:
-          value += n; continue
-        # Then reset DFA, process, and yield:
-        else:
-          state = INITIAL; yield (self.TOKEN_LITERAL, Integer(value)); continue
-
-      if state == UNICODE:
-        if c is None:
-          raise self.TokenError, (
-            u"unexpected end-of-file within unicode string")
-        elif c in unicodeclose and initial in unicodemap[c] and not count%2:
-          state = INITIAL; yield (
-            self.TOKEN_LITERAL,
-            Unicode(value.replace(u'\\"',u'"'))); continue
-        if c == u"\\": count += 1
-        else:          count  = 0
-        if not (c == u"\\" and (n == u"\\" or initial in unicodemap.get(n, ())) and count%2):
-          value += unicode(c)
-        continue
-
-    if len(parens):
-      raise self.TokenError, (
-        u"unexpected end-of-file with unmatched opening/closing syntax: "
-        u"%s" % u", ".join(repr(x) for x in parens))
-
-    if COMMENT == state:
-      raise self.TokenError, (
-        u"unexpected end-of-file within comment")
-
-    # If we've made it this far, then we've exhausted the input, and are not
-    # in a state of expecting more input. As a generator we signal that we are
-    # done creating new tokens by raising a StopIteration exception.
-    raise StopIteration
-
-  def _parse(self, tokens):
-    """Parses a sequence of tokens into an abstract syntax tree, represented
-    as nested Python objects."""
-    # Used in a few locations where a sentinel value is required that is not
-    # also a valid Python-represented haiku expression.
-    SENTINEL = object()
-
-    # The short-hand quote syntax is transformed into a special-form lambda
-    # expression. To prevent magic string values, the names are specified here
-    # in `quotedmap`.
-    quotedmap = {
-      self.QUOTE_OPERATOR:          'quote',
-      self.UNQUOTE_OPERATOR:        'unquote',
-      self.UNQUOTE_SPLICE_OPERATOR: 'unquote-splice',
-    }
-
-    # `parenmap` matches opening to closing tokens.
-    parenmap = {
-      self.TUPLE_OPEN:     self.TUPLE_CLOSE,
-      self.EVAL_DATA_OPEN: self.EVAL_DATA_CLOSE,
-      self.SEQUENCE_OPEN:  self.SEQUENCE_CLOSE,
-    }
-
-    # Initialize DFA and related state variables:
-    key    = SENTINEL
-    count  = Integer(0)
-    tuple_ = Tuple()
-
-    quotes = []
-    counts = []
-    tuples = []
-    parens = []
-
-    for c, n in lookahead(tokens):
-      # Our approach for parsing is to look at only the next two tokens in
-      # the stream at a time. This is sufficient for parsing the very simple
-      # syntax of Lisp.
-      ct, cv = c
-      nt, nv = n or (None, None)
-
-      if self.TOKEN_LITERAL == ct:
-        value = cv
-        # Pass-through to key, value insertion below
-
-      elif self.ASSOCIATION_OPERATOR == cv:
-        if key is SENTINEL:
+      # The creation of tuple values is a little tricky as keys may be
+      # specified either implicitly (by position) or explicitly.
+      def icount(*args, **kwargs):
+        _iter = count(*args, **kwargs)
+        for i in _iter:
+          yield Integer(i)
+      def _TupleSyntax(parts):
+        # (Remember, Python's `tuple` is quite different from haiku's `Tuple`)
+        kwargs = filter(lambda arg:isinstance(arg, tuple), parts)
+        args   = filter(lambda arg:arg not in kwargs, parts)
+        tuple_ = Tuple(kwargs)
+        if len(kwargs) != len(tuple_):
           raise self.SyntaxError, (
-            u"detached association operator; no key specified")
-        continue
-
-      elif cv in (self.QUOTE_OPERATOR, self.UNQUOTE_OPERATOR, self.UNQUOTE_SPLICE_OPERATOR):
-        quotes.append(quotedmap[cv]); continue
-
-      elif cv in parenmap.keys():
-        counts.append(count);  count  = Integer(0)
-        tuples.append(tuple_); tuple_ = Tuple()
-        parens.append(parenmap[cv]); continue
-
-      elif cv in parenmap.values():
-        if key is not SENTINEL:
+            u"duplicate keys in keyword arguments")
+        tuple_.update(Tuple(izip(icount(), args)))
+        if len(parts) != len(tuple_):
+          dups = filter(lambda x:x in tuple_.keys(), xrange(len(args)))
           raise self.SyntaxError, (
-            u"unexpected closing syntax at top level")
-        if parens.pop(-1) != cv:
-          raise self.SyntaxError, (
-            u"mis-matched open/close syntax")
+            u"redundant parameter(s) specified positionally and as keyword arguments")
+        return tuple_
+      TupleSyntax = (
+        ~lepl.Literal(self.TUPLE_OPEN) &
+        KeywordExpression[0:] &
+        ~lepl.Literal(self.TUPLE_CLOSE)) > _TupleSyntax
 
-        if self.TUPLE_CLOSE == cv:
-          value = tuple_
-        elif self.EVAL_DATA_CLOSE == cv:
-          value = Tuple([(Integer(0), quotedmap[self.QUOTE_OPERATOR]),
-                         (Integer(1), Tuple([(k, Tuple([(Integer(0), quotedmap[self.UNQUOTE_OPERATOR]),
-                                                        (Integer(1), v)]))
-                                             for k,v in tuple_.items()]))])
-        elif self.SEQUENCE_CLOSE == cv:
-          if sorted(tuple_.keys()) != [Integer(x) for x in xrange(len(tuple_))]:
-            raise self.SyntaxError, (
-              u"illegal association operator within sequence expression")
-          value = Sequence([tuple_[k] for k in sorted(tuple_.keys())])
-        count  = counts.pop(-1)
-        tuple_ = tuples.pop(-1)
-        # Pass-through to key, value insertion below
+      # Eval-data special form:
+      def _EvalDataSyntax(parts):
+        tuple_ = _TupleSyntax(parts)
+        tuple_ = Tuple([(key, _UnquoteSyntax(value)) for key, value in tuple_.items()])
+        tuple_ = Tuple([(0, self.QUOTE_PROCEDURE), (1, tuple_)])
+        return tuple_
+      EvalDataSyntax = (
+        ~lepl.Literal(self.EVAL_DATA_OPEN) &
+        KeywordExpression[0:] &
+        ~lepl.Literal(self.EVAL_DATA_CLOSE)) > _EvalDataSyntax
 
-      # Quote, unquote, unquote-splice handling:
-      for quote in reversed(quotes):
-        value = Tuple([(Integer(0), quote),
-                       (Integer(1), value)])
-      quotes = []
+      # Sequence special form:
+      _SequenceSyntax = lambda args:Sequence(args)
+      SequenceSyntax = (
+        ~lepl.Literal(self.SEQUENCE_OPEN) &
+        Expression[0:] &
+        ~lepl.Literal(self.SEQUENCE_CLOSE)) > _SequenceSyntax
 
-      if key is SENTINEL:
-        if n == (self.TOKEN_SYNTAX, self.ASSOCIATION_OPERATOR):
-          key = value; continue
-        else:
-          key = count; count += Integer(1)
+      # Now that we've defined each component, we can go back and complete
+      # Expression's definition:
+      Expression += (QuoteSyntax | UnquoteSyntax | UnquoteSpliceSyntax |
+        TupleSyntax | EvalDataSyntax | SequenceSyntax | UnicodeString |
+        Rational | Integral | Constant | Symbol)
 
-      # Special unicode key handling:
-      if isinstance(key, UnicodeCompatible):
-        key = Unicode(Unicode(u"").join([Unicode(u"\ufeff"), key]))
+      # ...and our overall grammar: zero or more Expression's optionally
+      # separated by whitespace.
+      Syntax = Expression[0:] & ~lepl.Eos()
 
-      # Key, value insertion:
-      tuple_[key] = value
-      key = SENTINEL
-
-    return tuple_
+    # Save the `Syntax` matcher for use by other methods:
+    self._matcher = Syntax
 
 # ===----------------------------------------------------------------------===
 # End of File
