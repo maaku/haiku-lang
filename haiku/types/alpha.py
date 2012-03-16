@@ -39,7 +39,6 @@ API, all types derive from `Alpha`, so `isinstance(value, Alpha)` is always
 true."""
 
 __all__ = [
-  'Alpha',
   'AlphaCompatible',
 ]
 
@@ -47,8 +46,6 @@ __all__ = [
 
 # Python standard library, abstract base classes
 from abc import ABCMeta
-
-Alpha = object
 
 class AlphaCompatible(object):
   __metaclass__ = ABCMeta
