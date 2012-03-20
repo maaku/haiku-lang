@@ -60,6 +60,10 @@ __all__ = [
 
 # ===----------------------------------------------------------------------===
 
+# s-expression syntax:
+#
+# TBD...
+
 class SimpleExpressionPickler(BasePickler):
   """Implements a serialization format for a variant of classic Lisp s-
   expression notation--here renamed “Simple Expressions”--for the Lisp-like,

@@ -39,6 +39,12 @@ __all__ = [
   'MetaExpressionPickler',
 ]
 
+# ===----------------------------------------------------------------------===
+
+# m-expression syntax:
+#
+# TBD...
+
 class MetaExpressionPickler(BasePickler):
   pass
 

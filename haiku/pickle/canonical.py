@@ -39,6 +39,20 @@ __all__ = [
   'CanonicalExpressionPickler',
 ]
 
+# ===----------------------------------------------------------------------===
+
+# c-expression syntax:
+#
+#  <c-tuple>:: “[” <c-expr>* “]”
+#   <c-expr>:: <c-part> | “'” <c-expr> | “,” <c-expr> | “`” <c-expr>
+#   <c-part>:: <atom> | <c-expr>
+#     <atom>:: <decimal> “:” [octet array of <decimal> length]
+#  <decimal>:: <nzddigit> <ddigit>*
+# <nzddigit>:: “1” | “2” | “3” | “4” | “5” | “6” | “7” | “8” | “9”
+#   <ddigit>:: “0” | <nzddigit>
+#
+# That's it!
+
 class CanonicalExpressionPickler(BasePickler):
   pass
 
