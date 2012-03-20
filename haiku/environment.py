@@ -91,6 +91,9 @@ class Environment(dict):
       self = self._parent.resolve(symbol)
     return self
 
+from haiku.types.tuple_ import TupleCompatible
+TupleCompatible.register(Environment)
+
 # ===----------------------------------------------------------------------===
 # End of File
 # ===----------------------------------------------------------------------===
