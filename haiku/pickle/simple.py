@@ -279,7 +279,7 @@ class SimpleExpressionPickler(BasePickler):
     # already if we were a valid Python-represented haiku expression. So we
     # can assume the caller passed us something in error and report the
     # problem:
-    raise ValueError, (
+    raise ValueError(
       u"unrecognized input (not a valid expression): '%s'" % repr(expression))
 
   def __init__(self, *args, **kwargs):
@@ -360,7 +360,7 @@ class SimpleExpressionPickler(BasePickler):
           return Boolean(False)
         if symbol in ('t','true'):
           return Boolean(True)
-        raise self.TokenError, (
+        raise self.SyntaxError(
           u"unrecognized constant name: %s" % repr(symbol))
       Constant = (~lepl.Literal(u"#") & Symbol) >> _Constant
 
@@ -394,12 +394,12 @@ class SimpleExpressionPickler(BasePickler):
         args   = filter(lambda arg:arg not in kwargs, parts)
         tuple_ = Tuple(kwargs)
         if len(kwargs) != len(tuple_):
-          raise self.SyntaxError, (
+          raise self.SyntaxError(
             u"duplicate keys in keyword arguments")
         tuple_.update(Tuple(izip(icount(), args)))
         if len(parts) != len(tuple_):
           dups = filter(lambda x:x in tuple_.keys(), xrange(len(args)))
-          raise self.SyntaxError, (
+          raise self.SyntaxError(
             u"redundant parameter(s) specified positionally and as keyword arguments")
         return tuple_
       TupleSyntax = (
