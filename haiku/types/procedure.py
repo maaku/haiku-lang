@@ -45,15 +45,22 @@ __all__ = [
 # Python standard library, abstract base classes
 from abc import ABCMeta
 
-class Procedure(object):
-  def __init__(self, params, params_ellipsis, kwparams, kwparams_ellipsis,
-    environment, body):
-    (self.params, self.kwparams, self.environment, self.body) = (
-      params, kwparams, environment, body)
+# Haiku language, environment mapping
+from haiku.environment import Environment
 
-  def __call__(self, *args, **kwargs):
-    return evaluate(self.body, Environment(
-      self.params, args, self.kwparams, kwargs, self.environment))
+class Procedure(object):
+  def __init__(self, params, defaults, ellipsis, environment, body):
+    (self.params, self.defaults, self.ellipsis, self.environment, self.body) = (
+      params, defaults, ellipsis, environment, body)
+
+  def __call__(self, evaluate, args):
+    environment = Environment(
+      self.params,
+      self.defaults,
+      self.ellipsis,
+      args,
+      self.environment)
+    return evaluate(self.body, environment)
 
 class ProcedureCompatible(object):
   __metaclass__ = ABCMeta
