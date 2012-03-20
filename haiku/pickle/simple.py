@@ -33,21 +33,6 @@
 # DOCUMENTATION, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # ===----------------------------------------------------------------------===
 
-# Python standard library, Base64 encoding
-from binascii import b2a_base64
-
-# Python standard library, iteration tools
-from itertools import count, izip
-
-# Python standard library, intrinsic operators
-from operator import mul
-
-# Python patterns, lookahead generator
-from python_patterns.itertools import lookahead
-
-# LEPL: Recursive descent parser for Python applications
-import lepl
-
 # Haiku language, type definitions
 from haiku.types import *
 
@@ -63,6 +48,19 @@ __all__ = [
 # s-expression syntax:
 #
 # TBD...
+
+# Python standard library, Base64 encoding
+from binascii import b2a_base64
+# Python standard library, iteration tools
+from itertools import count, izip
+# Python standard library, intrinsic operators
+from operator import mul
+
+# Python patterns, lookahead generator
+from python_patterns.itertools import lookahead
+
+# LEPL: Recursive descent parser for Python applications
+import lepl
 
 class SimpleExpressionPickler(BasePickler):
   """Implements a serialization format for a variant of classic Lisp s-
