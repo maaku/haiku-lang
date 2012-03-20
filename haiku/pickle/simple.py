@@ -79,25 +79,6 @@ class SimpleExpressionPickler(BasePickler):
     >>> pickler.dumps({0:'*',1:3,2:{0:'+',1:1,2:6}})
     u'[* 3 [+ 1 6]]'
   """
-  # Various syntax/token constants, used within the load() and dump() methods.
-  TUPLE_OPEN      = u"["
-  TUPLE_CLOSE     = u"]"
-  EVAL_DATA_OPEN  = u"{"
-  EVAL_DATA_CLOSE = u"}"
-  SEQUENCE_OPEN   = u"("
-  SEQUENCE_CLOSE  = u")"
-
-  ASSOCIATION_OPERATOR    = u":"
-  QUOTE_OPERATOR          = u"'"
-  UNQUOTE_OPERATOR        = u","
-  UNQUOTE_SPLICE_OPERATOR = u"`"
-  CONSTANT_INDICATOR      = u"#"
-  COMMENT_INDICATOR       = u";"
-
-  QUOTE_PROCEDURE          = 'quote'
-  UNQUOTE_PROCEDURE        = 'unquote'
-  UNQUOTE_SPLICE_PROCEDURE = 'unquote-splice'
-
   # Integers are one or more decimal digits, optionally starting with either a
   # plus or minus sign. (Note: there cannot be any whitespace between the +/-
   # sign and the digits, or else the sign will be misinterpreted as an

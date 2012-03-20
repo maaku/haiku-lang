@@ -57,6 +57,25 @@ class BasePickler(object):
   # make a property of this `BasePickler` as well.
   SyntaxError = SyntaxError
 
+  # Various syntax/token constants, used within the load() and dump() methods.
+  TUPLE_OPEN      = u"["
+  TUPLE_CLOSE     = u"]"
+  EVAL_DATA_OPEN  = u"{"
+  EVAL_DATA_CLOSE = u"}"
+  SEQUENCE_OPEN   = u"("
+  SEQUENCE_CLOSE  = u")"
+
+  ASSOCIATION_OPERATOR    = u":"
+  QUOTE_OPERATOR          = u"'"
+  UNQUOTE_OPERATOR        = u","
+  UNQUOTE_SPLICE_OPERATOR = u"`"
+  CONSTANT_INDICATOR      = u"#"
+  COMMENT_INDICATOR       = u";"
+
+  QUOTE_PROCEDURE          = 'quote'
+  UNQUOTE_PROCEDURE        = 'unquote'
+  UNQUOTE_SPLICE_PROCEDURE = 'unquote-splice'
+
   # NOTE: implementors should override `dump()` in preference to `dumps()`, so
   #   that `dump()` does all of the work and `dumps()` calls dump with a
   #   `StringIO` object. In that way pickled expressions can be written to
