@@ -33,7 +33,7 @@
 # DOCUMENTATION, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # ===----------------------------------------------------------------------===
 
-from base import BasePickler
+from .base import BasePickler
 
 __all__ = [
   'CanonicalExpressionPickler',
