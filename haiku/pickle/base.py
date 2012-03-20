@@ -35,6 +35,8 @@
 
 from abc import ABCMeta, abstractmethod
 
+from cStringIO import StringIO
+
 __all__ = [
   'BasePickler',
 ]
@@ -55,33 +57,37 @@ class BasePickler(object):
   # make a property of this `BasePickler` as well.
   SyntaxError = SyntaxError
 
-  @abstractmethod
+  # NOTE: implementors should override `dump()` in preference to `dumps()`, so
+  #   that `dump()` does all of the work and `dumps()` calls dump with a
+  #   `StringIO` object. In that way pickled expressions can be written to
+  #   disk as they are generated, instead of having to generate the entire
+  #   pickled expression first, as would be the case when `dumps()` is
+  #   overridden.
   def dump(self, ostream, *args, **kwargs):
-    ""
-    # FIXME: implement a version that relies upon `self.dumps`, then remove
-    #   the @abstractmethod decorator.
-    return super(BasePickler, self).dump(*args, **kwargs)
-
-  @abstractmethod
+    """Serialize a Python-represented haiku expression into pickled form and
+    write the resulting string to the duck-typed `ostream` file-like
+    object."""
+    return ostream.write(self.dumps(*args, **kwargs))
   def dumps(self, *args, **kwargs):
-    ""
-    # FIXME: implement a version that relies upon `self.dump`, then remove the
-    #   @abstractmethod decorator.
-    return super(BasePickler, self).dumps(*args, **kwargs)
+    """Serialize a Python-represented haiku expression into pickled form and
+    return the result as either a byte- or Unicode-string (as required by the
+    pickle format)."""
+    ostream = StringIO()
+    self.dump(ostream, *args, **kwargs)
+    return ostream.getvalue()
 
-  @abstractmethod
+  # NOTE: implementors should give preference to overriding `load()` in
+  #   preference to `loads()`, for the same reasons explained above for
+  #   `dump()` vs. `dumps()`.
   def load(self, istream, *args, **kwargs):
-    ""
-    # FIXME: implement a version that relies upon `self.loads`, then remove
-    #   the @abstractmethod decorator.
-    return super(BasePickler, self).load(*args, **kwargs)
-
-  @abstractmethod
-  def loads(self, *args, **kwargs):
-    ""
-    # FIXME: implement a version that relies upon `self.load`, then remove the
-    #   @abstractmethod decorator.
-    return super(BasePickler, self).loads(*args, **kwargs)
+    """Deserializes a haiku expression in pickled form out of the duck-typed
+    `istream` file-like object and into Python-represented form."""
+    return self.loads(istream.read(), *args, **kwargs)
+  def loads(self, expression, *args, **kwargs):
+    """Deserializes a haiku expression in pickled form out of the byte- or
+    Unicode-string and into Python-represented form."""
+    istream = StringIO()
+    return self.load(istream, *args, **kwargs)
 
 # ===----------------------------------------------------------------------===
 # End of File
