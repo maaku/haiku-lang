@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# === haiku.types.bytes_ --------------------------------------------------===
+# === haiku.types.symbol --------------------------------------------------===
 # Copyright © 2011-2012, RokuSigma Inc. and contributors. See AUTHORS for more
 # details.
 #
@@ -33,13 +33,13 @@
 # DOCUMENTATION, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # ===----------------------------------------------------------------------===
 
-"""A (possibly empty) ordered sequence of bytes. `Bytes`' do double duty as
-both the symbols of the language, and as the binary serialization format of
-other types."""
+"""A (possibly empty) ordered sequence of bytes. `Symbol`'s do double duty as
+both the identifiers/names of the language, and as the binary serialization
+format of other types."""
 
 __all__ = [
-  'Bytes',
-  'BytesCompatible',
+  'Symbol',
+  'SymbolCompatible',
 ]
 
 # ===----------------------------------------------------------------------===
@@ -47,11 +47,14 @@ __all__ = [
 # Python standard library, abstract base classes
 from abc import ABCMeta
 
-Bytes = str
+Symbol = str
 
-class BytesCompatible(object):
+class SymbolCompatible(object):
   __metaclass__ = ABCMeta
-BytesCompatible.register(Bytes)
+
+# We are careful to register `str` and not `basestring` because `unicode`
+# values are instances of the `Unicode` type, not `Symbol`.
+SymbolCompatible.register(Symbol)
 
 # ===----------------------------------------------------------------------===
 # End of File

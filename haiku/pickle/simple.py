@@ -182,23 +182,23 @@ class SimpleExpressionPickler(BasePickler):
       return u"".join([u'"', expression.encode('unicode_escape')
                                        .replace(u"\"",u"\\\""), u'"'])
 
-    # Byte-array literals:
-    elif isinstance(expression, BytesCompatible):
-      # An empty byte-array is the #nil value
+    # Symbols literals:
+    elif isinstance(expression, SymbolCompatible):
+      # An empty symbol is the #nil value
       if not len(expression):
         return u"".join([self.CONSTANT_INDICATOR, u"nil"])
 
-      # A byte-array that meets the definition of an identifier is embedded
+      # A symbol that meets the definition of an identifier is embedded
       # directly:
       if expression[0] in self.SYMBOL_INITIAL:
         if all(c in self.SYMBOL_SUBSEQUENT for c in expression[1:]):
           return unicode(expression)
 
-      # All other byte-arrays are Base64-encoded:
+      # All other symbols are Base64-encoded:
       return u"".join([
         self.TUPLE_OPEN,
         u" ".join([
-          u"byte-array",
+          u"symbol",
           b2a_base64(expression).strip()
         ]),
         self.TUPLE_CLOSE])
@@ -296,10 +296,10 @@ class SimpleExpressionPickler(BasePickler):
     # Symbols are a stand-in type for both identifiers and operators (<, =, &,
     # etc.).
     # FIXME: add support for hex strings a la D
-    _Symbol = lambda lexemes:Bytes(u"".join(lexemes).encode('utf-8'))
-    Symbol = (
+    _Identifier = lambda lexemes:Symbol(u"".join(lexemes).encode('utf-8'))
+    Identifier = (
       lepl.Any(self.SYMBOL_INITIAL) &
-      lepl.Any(self.SYMBOL_SUBSEQUENT)[0:]) > _Symbol
+      lepl.Any(self.SYMBOL_SUBSEQUENT)[0:]) > _Identifier
 
     # FIXME: add support for binary, octal, hex, and perhaps other integer
     #   representations
@@ -360,7 +360,7 @@ class SimpleExpressionPickler(BasePickler):
           return Boolean(True)
         raise self.SyntaxError(
           u"unrecognized constant name: %s" % repr(symbol))
-      Constant = (~lepl.Literal(u"#") & Symbol) >> _Constant
+      Constant = (~lepl.Literal(u"#") & Identifier) >> _Constant
 
       # Special forms for quoting:
       _QuoteSyntax = lambda expr:Tuple([(0, self.QUOTE_PROCEDURE), (1, expr)])
@@ -427,7 +427,7 @@ class SimpleExpressionPickler(BasePickler):
       # Expression's definition:
       Expression += (QuoteSyntax | UnquoteSyntax | UnquoteSpliceSyntax |
         TupleSyntax | EvalDataSyntax | SequenceSyntax | UnicodeString |
-        Rational | Integral | Constant | Symbol)
+        Rational | Integral | Constant | Identifier)
 
       # ...and our overall grammar: zero or more Expression's optionally
       # separated by whitespace.

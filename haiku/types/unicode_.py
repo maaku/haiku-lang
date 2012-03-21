@@ -55,7 +55,7 @@ class UnicodeCompatible(object):
   __metaclass__ = ABCMeta
 
 # We are careful to register `unicode` and not `basestring` because `str`
-# values are instances of the `Bytes` type, not `Unicode`.
+# values are instances of the `Symbol` type, not `Unicode`.
 UnicodeCompatible.register(Unicode)
 
 # ===----------------------------------------------------------------------===

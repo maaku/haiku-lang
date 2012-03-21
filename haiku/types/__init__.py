@@ -35,7 +35,6 @@
 
 from .alpha     import *
 from .boolean   import *
-from .bytes_    import *
 from .fraction  import *
 from .integer   import *
 from .matrix    import *
@@ -44,6 +43,7 @@ from .procedure import *
 from .relation  import *
 from .sequence  import *
 from .set_      import *
+from .symbol    import *
 from .tuple_    import *
 from .unicode_  import *
 

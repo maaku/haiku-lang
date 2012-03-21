@@ -55,14 +55,14 @@ def i2bytearray(i):
   l = 1 + len(b)
   m = l % 8
   l = l + (m and 8-m or 0)
-  return Bytes(Bits(intle=i, length=l).bytes)
+  return Symbol(Bits(intle=i, length=l).bytes)
 
 # ===----------------------------------------------------------------------===
 
 def i2varnumber(i):
   "Serializes an integer to the varnumber format."
   if not i: return ':'
-  else:     return Bytes('').join(map(Bytes, [i, ':']))
+  else:     return Symbol('').join(map(Symbol, [i, ':']))
 
 # ===----------------------------------------------------------------------===
 
@@ -70,8 +70,8 @@ def s2varstring(s):
   "Serializes string to the varstring format."
   if isinstance(s, unicode):
     s = s.encode('utf-8')
-  if not s: return Bytes(':')
-  else:     return Bytes('').join(map(Bytes, [len(s), ':', s]))
+  if not s: return Symbol(':')
+  else:     return Symbol('').join(map(Symbol, [len(s), ':', s]))
 
 # ===----------------------------------------------------------------------===
 # End of File
