@@ -407,7 +407,7 @@ class SimpleExpressionPickler(BasePickler):
             u"duplicate keys in keyword arguments")
         tuple_.update(Tuple(izip(icount(), args)))
         if len(parts) != len(tuple_):
-          dups = filter(lambda x:x in tuple_.keys(), xrange(len(args)))
+          dups = filter(lambda x:x in tuple_, xrange(len(args)))
           raise self.SyntaxError(
             u"redundant parameter(s) specified positionally and as keyword arguments")
         return tuple_
