@@ -48,11 +48,6 @@ class BasePickler(object):
   serializers."""
   __metaclass__ = ABCMeta
 
-  # Python provides access to the tokenizing codes of its own interpreter. We
-  # won't be using the Python tokenizer but we will re-use its TokenError
-  # exception:
-  from tokenize import TokenError
-
   # Not a typo: SyntaxError is a built-in Python exception, which we want to
   # make a property of this `BasePickler` as well.
   SyntaxError = SyntaxError
