@@ -365,14 +365,23 @@ class SimpleExpressionPickler(BasePickler):
       Constant = (~lepl.Literal(u"#") & Identifier) >> _Constant
 
       # Special forms for quoting:
-      _QuoteSyntax = lambda expr:Tuple([(0, self.QUOTE_PROCEDURE), (1, expr)])
-      QuoteSyntax = (~lepl.Literal(self.QUOTE_OPERATOR) & Expression) >> _QuoteSyntax
+      _QuoteSyntax = lambda expr:Tuple([
+        (0, self.QUOTE_PROCEDURE),
+        (1, expr)])
+      QuoteSyntax = (
+        ~lepl.Literal(self.QUOTE_OPERATOR) & Expression) >> _QuoteSyntax
 
-      _UnquoteSyntax = lambda expr:Tuple([(0, self.UNQUOTE_PROCEDURE), (1, expr)])
-      UnquoteSyntax = (~lepl.Literal(self.UNQUOTE_OPERATOR) & Expression) >> _UnquoteSyntax
+      _UnquoteSyntax = lambda expr:Tuple([
+        (0, self.UNQUOTE_PROCEDURE),
+        (1, expr)])
+      UnquoteSyntax = (
+        ~lepl.Literal(self.UNQUOTE_OPERATOR) & Expression) >> _UnquoteSyntax
 
-      _UnquoteSpliceSyntax = lambda expr:Tuple([(0, self.UNQUOTE_SPLICE_PROCEDURE), (1, expr)])
-      UnquoteSpliceSyntax = (~lepl.Literal(self.UNQUOTE_SPLICE_OPERATOR) & Expression) >> _UnquoteSyntax
+      _UnquoteSpliceSyntax = lambda expr:Tuple([
+        (0, self.UNQUOTE_SPLICE_PROCEDURE),
+        (1, expr)])
+      UnquoteSpliceSyntax = (
+        ~lepl.Literal(self.UNQUOTE_SPLICE_OPERATOR) & Expression) >> _UnquoteSyntax
 
       # A keyword expression is a component of the tuple definition: a mapping
       # of one data to another (the key/value pair).
