@@ -184,9 +184,9 @@ class SimpleExpressionPickler(BasePickler):
 
     # Symbols literals:
     elif isinstance(expression, SymbolCompatible):
-      # An empty symbol is the #nil value
+      # An empty symbol is the #empty value
       if not len(expression):
-        return u"".join([self.CONSTANT_INDICATOR, u"nil"])
+        return u"".join([self.CONSTANT_INDICATOR, u"empty"])
 
       # A symbol that meets the definition of an identifier is embedded
       # directly:
@@ -358,6 +358,8 @@ class SimpleExpressionPickler(BasePickler):
           return Boolean(False)
         if symbol in ('t','true'):
           return Boolean(True)
+        if symbol in ('empty',):
+          return Symbol('')
         raise self.SyntaxError(
           u"unrecognized constant name: %s" % repr(symbol))
       Constant = (~lepl.Literal(u"#") & Identifier) >> _Constant
