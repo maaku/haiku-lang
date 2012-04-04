@@ -42,17 +42,17 @@ all: ${PKG_ROOT}/.stamp-h
 .PHONY: check
 check: ${PKG_ROOT}/.stamp-h
 	mkdir -p build/report/xunit
-	echo "\
-	import unittest2; \
-	import xmlrunner; \
-	unittest2.main( \
-	  testRunner=xmlrunner.XMLTestRunner(output='build/report/xunit'), \
-	  argv=['unit2', 'discover', \
-	    '-s','haiku', \
-	    '-p','*.py', \
-	    '-t','.', \
-	  ] \
-	)" >.pytest.py
+	@echo  >.pytest.py "import unittest2"
+	@echo >>.pytest.py "import xmlrunner"
+	@echo >>.pytest.py "unittest2.main("
+	@echo >>.pytest.py "  testRunner=xmlrunner.XMLTestRunner("
+	@echo >>.pytest.py "    output='build/report/xunit'),"
+	@echo >>.pytest.py "  argv=['unit2', 'discover',"
+	@echo >>.pytest.py "    '-s','haiku',"
+	@echo >>.pytest.py "    '-p','*.py',"
+	@echo >>.pytest.py "    '-t','.',"
+	@echo >>.pytest.py "  ]"
+	@echo >>.pytest.py ")"
 	chmod +x .pytest.py
 	"${PKG_ROOT}"/bin/coverage run .pytest.py || { rm -f .pytest.py; exit 1; }
 	"${PKG_ROOT}"/bin/coverage xml --omit=".pytest.py" -o build/report/coverage.xml
