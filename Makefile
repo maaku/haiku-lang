@@ -30,11 +30,11 @@
 # DOCUMENTATION, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # ===----------------------------------------------------------------------===
 
--include Makefile.local
-
 ROOT=$(shell pwd)
 CACHE_ROOT=${ROOT}/.cache
 PKG_ROOT=${ROOT}/.pkg
+
+-include Makefile.local
 
 .PHONY: all
 all: ${PKG_ROOT}/.stamp-h
