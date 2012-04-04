@@ -159,10 +159,10 @@ class CanonicalExpressionPickler(BasePickler):
           #    all(special_pattern(expression[1][key]) and
           #        expression[1][key][0] == self.UNQUOTE_PROCEDURE
           #        for key in expression[1].keys())):
-          #  return u"".join([
-          #    self.EVAL_DATA_OPEN,
+          #  return ''.join([
+          #    self.EVAL_DATA_OPEN.encode('utf-8'),
           #    self.dumps(expression[1]),
-          #    self.EVAL_DATA_CLOSE])
+          #    self.EVAL_DATA_CLOSE.encode('utf-8')])
           return ''.join([
             self.QUOTE_OPERATOR.encode('utf-8'),
             self._serialize(expression[1])])
@@ -201,7 +201,7 @@ class CanonicalExpressionPickler(BasePickler):
 
     # Sequences(/lists):
     elif isinstance(expression, SequenceCompatible):
-      return u"".join([
+      return ''.join([
         self.SEQUENCE_OPEN.encode('utf-8'),
         ''.join(self._serialize(elem) for elem in expression),
         self.SEQUENCE_CLOSE.encode('utf-8')])
