@@ -50,7 +50,7 @@ __all__ = [
 # TBD...
 
 # Python standard library, Base64 encoding
-from binascii import b2a_base64
+from base64 import urlsafe_b64encode as b64encode
 # Python standard library, iteration tools
 from itertools import count, izip
 # Python standard library, intrinsic operators
@@ -199,7 +199,7 @@ class SimpleExpressionPickler(BasePickler):
         self.TUPLE_OPEN,
         u" ".join([
           u"symbol",
-          b2a_base64(expression).strip()
+          u''.join(['\'', b64encode(expression).strip()]),
         ]),
         self.TUPLE_CLOSE])
 
