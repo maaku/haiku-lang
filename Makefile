@@ -93,12 +93,12 @@ shell: ${PKG_ROOT}/.stamp-h
 
 .PHONY: mostlyclean
 mostlyclean:
-
-.PHONY: clean
-clean: mostlyclean
 	-rm -rf dist
 	-rm -rf build
 	-rm -rf .coverage
+
+.PHONY: clean
+clean: mostlyclean
 	-rm -rf "${PKG_ROOT}"
 
 .PHONY: distclean
