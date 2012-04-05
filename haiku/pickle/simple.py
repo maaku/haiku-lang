@@ -198,7 +198,7 @@ class SimpleExpressionPickler(BasePickler):
       return u"".join([
         self.TUPLE_OPEN,
         u" ".join([
-          u"symbol",
+          u"b64decode",
           u''.join(['\'', b64encode(expression).strip()]),
         ]),
         self.TUPLE_CLOSE])
