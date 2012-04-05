@@ -91,6 +91,10 @@ debugcheck: ${PKG_ROOT}/.stamp-h
 shell: ${PKG_ROOT}/.stamp-h
 	"${PKG_ROOT}"/bin/ipython
 
+.PHONY: run
+run: ${PKG_ROOT}/.stamp-h
+	"${PKG_ROOT}"/bin/ipython haiku/shell.py
+
 .PHONY: mostlyclean
 mostlyclean:
 	-rm -rf dist
