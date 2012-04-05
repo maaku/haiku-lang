@@ -77,6 +77,11 @@ version = get_version().replace(' ', '-')
 setup(name='haiku-lang',
   version=version,
   description='An embedable LISP implemented on top of the Python interpreter.',
+  install_requires=[
+    'LEPL>=5.0.2',
+    'bitstring>=3.0.2',
+    'python-patterns>=0.0.1',
+  ],
   author='RokuSigma Inc.',
   author_email='haiku-lang@monetize.io',
   url='http://www.github.com/monetizeio/haiku-lang/',
