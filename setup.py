@@ -73,13 +73,14 @@ for dirpath, dirnames, filenames in os.walk('haiku'):
     for f in filenames:
       data_files.append(os.path.join(prefix, f))
 
+version = get_version().replace(' ', '-')
 setup(name='haiku-lang',
-  version=get_version().replace(' ', '-'),
+  version=version,
   description='An embedable LISP implemented on top of the Python interpreter.',
   author='RokuSigma Inc.',
-  author_email='haiku-lang@roku-sigma.com',
-  url='http://www.github.com/rokusigma/haiku-lang/',
-  download_url='http://github.com/rokusigma/haiku-lang/tarball/master',
+  author_email='haiku-lang@monetize.io',
+  url='http://www.github.com/monetizeio/haiku-lang/',
+  download_url='http://pypi.python.org/packages/source/h/haiku-lang/haiku-lang-%s.tar.gz' % version,
   package_dir={'haiku': 'haiku'},
   packages=packages,
   package_data={'haiku': data_files},
