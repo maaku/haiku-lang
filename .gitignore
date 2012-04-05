@@ -5,3 +5,4 @@ Makefile.local
 .pkg
 build
 .coverage
+dist
