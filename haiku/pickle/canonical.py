@@ -36,6 +36,8 @@
 # Python standard library, iteration tools
 from itertools import count
 
+from python_patterns.itertools import lookahead
+
 # Haiku language, type definitions
 from haiku.types import *
 
@@ -220,6 +222,97 @@ class CanonicalExpressionPickler(BasePickler):
     # problem:
     raise ValueError(
       u"unrecognized input (not a valid expression): '%s'" % repr(expression))
+
+  def _tokenize(self, iterable):
+    ""
+    INITIAL, LENGTH, SEPARATOR, SYMBOL = range(4)
+
+    parenopen_tuple      = set([self.TUPLE_OPEN.encode('utf-8')])
+    parenopen_eval_data  = set([self.EVAL_DATA_OPEN.encode('utf-8')])
+    parenopen_sequence   = set([self.SEQUENCE_OPEN.encode('utf-8')])
+    parenopen            = parenopen_sequence.union(
+                             parenopen_eval_data.union(parenopen_tuple))
+    parenclose_tuple     = set([self.TUPLE_CLOSE.encode('utf-8')])
+    parenclose_eval_data = set([self.EVAL_DATA_CLOSE.encode('utf-8')])
+    parenclose_sequence  = set([self.SEQUENCE_CLOSE.encode('utf-8')])
+    parenclose           = parenclose_sequence.union(
+                            parenclose_eval_data.union(parenclose_tuple))
+    parenmap = {
+      self.TUPLE_CLOSE.encode('utf-8'):     self.TUPLE_OPEN.encode('utf-8'),
+      self.EVAL_DATA_CLOSE.encode('utf-8'): self.EVAL_DATA_OPEN.encode('utf-8'),
+      self.SEQUENCE_CLOSE.encode('utf-8'):  self.SEQUENCE_OPEN.encode('utf-8'),
+    }
+
+    association_operator    = set([self.ASSOCIATION_OPERATOR.encode('utf-8')])
+    quote_operator          = set([self.QUOTE_OPERATOR.encode('utf-8')])
+    unquote_operator        = set([self.UNQUOTE_OPERATOR.encode('utf-8')])
+    unquote_splice_operator = set([self.UNQUOTE_SPLICE_OPERATOR.encode('utf-8')])
+
+    parens = []
+    state = INITIAL
+    for c,n in lookahead(iterable):
+      if state == INITIAL:
+        if c in association_operator:    yield self.ASSOCIATION_OPERATOR;    continue
+        if c in quote_operator:          yield self.QUOTE_OPERATOR;          continue
+        if c in unquote_operator:        yield self.UNQUOTE_OPERATOR;        continue
+        if c in unquote_splice_operator: yield self.UNQUOTE_SPLICE_OPERATOR; continue
+
+        if c in parenopen:
+          if   c in parenopen_tuple:     token = self.TUPLE_OPEN
+          elif c in parenopen_eval_data: token = self.EVAL_DATA_OPEN
+          elif c in parenopen_sequence:  token = self.SEQUENCE_OPEN
+          else:
+            raise self.SyntaxError(
+              u"internal error: unexpected matched opening syntax: "
+              u"%s" % repr(c))
+          parens.append(c); yield token; continue
+
+        if c in parenclose:
+          if   c in parenclose_tuple:     token = self.TUPLE_CLOSE
+          elif c in parenclose_eval_data: token = self.EVAL_DATA_CLOSE
+          elif c in parenclose_sequence:  token = self.SEQUENCE_CLOSE
+          else:
+            raise self.SyntaxError(
+              u"internal error: unexpected matched closing syntax: "
+              u"%s" % repr(c))
+          if not parens:
+            raise self.SyntaxError(
+              u"unexpected closing syntax at top level: %s" % repr(c))
+          if parens[-1] not in parenmap[c]:
+            raise self.SyntaxError(
+              u"mismatched opening and closing syntax: "
+              u"%s does not match %s" % (repr(parens[-1]), repr(c)))
+          parens = parens[:-1]; yield token; continue
+
+        if c in '123456789':
+          state, value = LENGTH, c
+          # Pass-through to LENGTH handler below
+
+      if state == LENGTH:
+        # Fill until n is not a digit:
+        if n is not None and n in '0123456789':
+          value += n; continue
+        # Then reset DFA, process, and yield:
+        else:
+          state, count = SEPARATOR, int(value); continue
+
+      if state == SEPARATOR:
+        if c != ':':
+          raise self.SyntaxError(
+            u"expected separator, found unexpected character instead: "
+            u"%s" % repr(c))
+        state, bytes = SYMBOL, []; continue
+
+      if state == SYMBOL:
+        bytes.append(c)
+        count -= 1
+        if not count:
+          state = INITIAL; yield ''.join(bytes); continue
+
+    # If we've made it this far, then we've exhausted the input, and are not
+    # in a state of expecting more input. As a generator we signal that we are
+    # now done creating new tokens by raising a StopIteration exception.
+    raise StopIteration
 
 # ===----------------------------------------------------------------------===
 # End of File
