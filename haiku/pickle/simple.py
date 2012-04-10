@@ -56,9 +56,6 @@ from itertools import count, izip
 # Python standard library, intrinsic operators
 from operator import mul
 
-# Python patterns, lookahead generator
-from python_patterns.itertools import lookahead
-
 # LEPL: Recursive descent parser for Python applications
 import lepl
 
