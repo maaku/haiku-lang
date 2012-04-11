@@ -103,7 +103,10 @@ class CanonicalExpressionPickler(BasePickler):
     in “Canonical Expression” notation."""
     # None/nil/omega value:
     if isinstance(expression, OmegaCompatible):
-      return s2varstring('')
+      return ''.join([
+        self.TUPLE_OPEN.encode('utf-8'),
+        s2varstring('nil'),
+        self.TUPLE_CLOSE.encode('utf-8')])
 
     # Boolean literals:
     elif isinstance(expression, BooleanCompatible):
