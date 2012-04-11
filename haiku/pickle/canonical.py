@@ -126,6 +126,7 @@ class CanonicalExpressionPickler(BasePickler):
       return ''.join([
         self.TUPLE_OPEN.encode('utf-8'),
         s2varstring('integer'),
+        self.QUOTE_OPERATOR.encode('utf-8'),
         s2varstring(expression and i2bytearray(expression) or ''),
         self.TUPLE_CLOSE.encode('utf-8')])
 
