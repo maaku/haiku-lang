@@ -143,8 +143,14 @@ class CanonicalExpressionPickler(BasePickler):
     elif isinstance(expression, UnicodeCompatible):
       return ''.join([
         self.TUPLE_OPEN.encode('utf-8'),
-        s2varstring('string'),
+        s2varstring('decode'),
+        self.QUOTE_OPERATOR.encode('utf-8'),
         s2varstring(expression.encode('utf-8')),
+        self.ASSOCIATION_OPERATOR.encode('utf-8'),
+        self.QUOTE_OPERATOR.encode('utf-8'),
+        s2varstring('encoding'),
+        self.QUOTE_OPERATOR.encode('utf-8'),
+        s2varstring('utf-8'),
         self.TUPLE_CLOSE.encode('utf-8')])
 
     # Byte-array literals:
