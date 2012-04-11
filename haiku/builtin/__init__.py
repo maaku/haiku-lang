@@ -36,7 +36,7 @@
 from haiku.environment import Environment
 builtinEnvironment = Environment()
 
-from .baseenc  import *
+from .base64_  import *
 from .constant import *
 from .pickle   import *
 from .types    import *
