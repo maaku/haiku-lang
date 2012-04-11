@@ -37,6 +37,7 @@
 
 __all__ = [
   'Set',
+  'FrozenSet',
   'SetCompatible',
 ]
 
@@ -46,11 +47,13 @@ __all__ = [
 from abc import ABCMeta
 
 Set = set
+FrozenSet = frozenset
 
 class SetCompatible(object):
   ""
   __metaclass__ = ABCMeta
 SetCompatible.register(Set)
+SetCompatible.register(FrozenSet)
 
 # ===----------------------------------------------------------------------===
 # End of File

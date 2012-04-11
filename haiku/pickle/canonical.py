@@ -33,15 +33,8 @@
 # DOCUMENTATION, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # ===----------------------------------------------------------------------===
 
-# Python standard library, iteration tools
-from itertools import count
-
-from python_patterns.itertools import lookahead
-
 # Haiku language, type definitions
 from haiku.types import *
-
-from haiku.utils.serialization import i2bytearray, i2varnumber, s2varstring
 
 from .base import BasePickler
 
@@ -62,6 +55,18 @@ __all__ = [
 #   <ddigit>:: “0” | <nzddigit>
 #
 # That's it!
+
+# Python standard library,
+from copy import copy
+
+# Python standard library, iteration tools
+from itertools import count, izip
+
+# LEPL: Recursive descent parser for Python applications
+import lepl
+from lepl.core.dynamic import IntVar as lepl_IntVar
+
+from haiku.utils.serialization import i2bytearray, i2varnumber, s2varstring
 
 class CanonicalExpressionPickler(BasePickler):
   ""
@@ -88,8 +93,10 @@ class CanonicalExpressionPickler(BasePickler):
     # convert it to s-expression notation.
     return self._serialize(args[0])
 
-  def load(self, istream):
-    return []
+  def loads(self, expression):
+    """Deserializes a haiku expression from a Unicode represented string in
+    “Canonical Expression” notation to Python objects."""
+    return self._matcher.parse(expression)
 
   def _serialize(self, expression):
     """Translates a Python-represented haiku expression into a byte string
@@ -223,96 +230,109 @@ class CanonicalExpressionPickler(BasePickler):
     raise ValueError(
       u"unrecognized input (not a valid expression): '%s'" % repr(expression))
 
-  def _tokenize(self, iterable):
-    ""
-    INITIAL, LENGTH, SEPARATOR, SYMBOL = range(4)
+  def __init__(self, *args, **kwargs):
+    "Sets up a parser using the LEPL package."
+    super(CanonicalExpressionPickler, self).__init__(*args, **kwargs)
 
-    parenopen_tuple      = set([self.TUPLE_OPEN.encode('utf-8')])
-    parenopen_eval_data  = set([self.EVAL_DATA_OPEN.encode('utf-8')])
-    parenopen_sequence   = set([self.SEQUENCE_OPEN.encode('utf-8')])
-    parenopen            = parenopen_sequence.union(
-                             parenopen_eval_data.union(parenopen_tuple))
-    parenclose_tuple     = set([self.TUPLE_CLOSE.encode('utf-8')])
-    parenclose_eval_data = set([self.EVAL_DATA_CLOSE.encode('utf-8')])
-    parenclose_sequence  = set([self.SEQUENCE_CLOSE.encode('utf-8')])
-    parenclose           = parenclose_sequence.union(
-                            parenclose_eval_data.union(parenclose_tuple))
-    parenmap = {
-      self.TUPLE_CLOSE.encode('utf-8'):     self.TUPLE_OPEN.encode('utf-8'),
-      self.EVAL_DATA_CLOSE.encode('utf-8'): self.EVAL_DATA_OPEN.encode('utf-8'),
-      self.SEQUENCE_CLOSE.encode('utf-8'):  self.SEQUENCE_OPEN.encode('utf-8'),
-    }
+    Expression = lepl.Delayed()
 
-    association_operator    = set([self.ASSOCIATION_OPERATOR.encode('utf-8')])
-    quote_operator          = set([self.QUOTE_OPERATOR.encode('utf-8')])
-    unquote_operator        = set([self.UNQUOTE_OPERATOR.encode('utf-8')])
-    unquote_splice_operator = set([self.UNQUOTE_SPLICE_OPERATOR.encode('utf-8')])
+    _UnsignedInteger = lambda digits:int(''.join(digits) or '0')
+    UnsignedInteger = (
+        lepl.Optional(lepl.Any('123456789') &
+                      lepl.Any('0123456789')[:]) &
+        ~lepl.Literal(':')
+      ) > _UnsignedInteger
 
-    parens = []
-    state = INITIAL
-    for c,n in lookahead(iterable):
-      if state == INITIAL:
-        if c in association_operator:    yield self.ASSOCIATION_OPERATOR;    continue
-        if c in quote_operator:          yield self.QUOTE_OPERATOR;          continue
-        if c in unquote_operator:        yield self.UNQUOTE_OPERATOR;        continue
-        if c in unquote_splice_operator: yield self.UNQUOTE_SPLICE_OPERATOR; continue
+    _ByteArray = lambda bytes:Symbol(''.join(bytes))
+    _ByteArrayLength = lepl_IntVar()
+    _ByteArrayHeader = lepl.Apply(UnsignedInteger, _ByteArrayLength.setter())
+    _ByteArrayBody   = lepl.Repeat(lepl.Any(), stop=_ByteArrayLength, add_=True)
+    ByteArray = (
+      ~_ByteArrayHeader &
+      _ByteArrayBody) > _ByteArray
+    ByteArray.config.no_compile_to_regexp()
 
-        if c in parenopen:
-          if   c in parenopen_tuple:     token = self.TUPLE_OPEN
-          elif c in parenopen_eval_data: token = self.EVAL_DATA_OPEN
-          elif c in parenopen_sequence:  token = self.SEQUENCE_OPEN
-          else:
-            raise self.SyntaxError(
-              u"internal error: unexpected matched opening syntax: "
-              u"%s" % repr(c))
-          parens.append(c); yield token; continue
+    # Special forms for quoting:
+    _QuoteSyntax = lambda expr:Tuple([
+      (0, self.QUOTE_PROCEDURE),
+      (1, expr)])
+    QuoteSyntax = (
+      ~lepl.Literal(self.QUOTE_OPERATOR) & Expression) >> _QuoteSyntax
 
-        if c in parenclose:
-          if   c in parenclose_tuple:     token = self.TUPLE_CLOSE
-          elif c in parenclose_eval_data: token = self.EVAL_DATA_CLOSE
-          elif c in parenclose_sequence:  token = self.SEQUENCE_CLOSE
-          else:
-            raise self.SyntaxError(
-              u"internal error: unexpected matched closing syntax: "
-              u"%s" % repr(c))
-          if not parens:
-            raise self.SyntaxError(
-              u"unexpected closing syntax at top level: %s" % repr(c))
-          if parens[-1] not in parenmap[c]:
-            raise self.SyntaxError(
-              u"mismatched opening and closing syntax: "
-              u"%s does not match %s" % (repr(parens[-1]), repr(c)))
-          parens = parens[:-1]; yield token; continue
+    _UnquoteSyntax = lambda expr:Tuple([
+      (0, self.UNQUOTE_PROCEDURE),
+      (1, expr)])
+    UnquoteSyntax = (
+      ~lepl.Literal(self.UNQUOTE_OPERATOR) & Expression) >> _UnquoteSyntax
 
-        if c in '123456789':
-          state, value = LENGTH, c
-          # Pass-through to LENGTH handler below
+    _UnquoteSpliceSyntax = lambda expr:Tuple([
+      (0, self.UNQUOTE_SPLICE_PROCEDURE),
+      (1, expr)])
+    UnquoteSpliceSyntax = (
+      ~lepl.Literal(self.UNQUOTE_SPLICE_OPERATOR) & Expression) >> _UnquoteSyntax
 
-      if state == LENGTH:
-        # Fill until n is not a digit:
-        if n is not None and n in '0123456789':
-          value += n; continue
-        # Then reset DFA, process, and yield:
-        else:
-          state, count = SEPARATOR, int(value); continue
+    # A keyword expression is a component of the tuple definition: a mapping
+    # of one data to another (the key/value pair).
+    _KeywordExpression = lambda parts:len(parts)-1 and tuple(parts) or parts[0]
+    KeywordExpression = ((
+        ~lepl.Literal(self.ASSOCIATION_OPERATOR.encode('utf-8'))
+        & Expression & Expression
+      ) | Expression) > _KeywordExpression
 
-      if state == SEPARATOR:
-        if c != ':':
-          raise self.SyntaxError(
-            u"expected separator, found unexpected character instead: "
-            u"%s" % repr(c))
-        state, bytes = SYMBOL, []; continue
+    # The creation of tuple values is a little tricky as keys may be
+    # specified either implicitly (by position) or explicitly.
+    def icount(*args, **kwargs):
+      _iter = count(*args, **kwargs)
+      for i in _iter:
+        yield Integer(i)
+    def _TupleSyntax(parts):
+      # (Remember, Python's `tuple` is quite different from haiku's `Tuple`)
+      kwargs = filter(lambda arg:isinstance(arg, tuple), parts)
+      args   = filter(lambda arg:arg not in kwargs, parts)
+      tuple_ = FrozenTuple(kwargs)
+      if len(kwargs) != len(tuple_):
+        raise self.SyntaxError(
+          u"duplicate keys in keyword arguments")
+      tuple_ = FrozenTuple([x for x in izip(icount(), args)] + kwargs)
+      if len(parts) != len(tuple_):
+        dups = filter(lambda x:x in tuple_, xrange(len(args)))
+        raise self.SyntaxError(
+          u"redundant parameter(s) specified positionally and as keyword arguments")
+      return tuple_
+    TupleSyntax = (
+      ~lepl.Literal(self.TUPLE_OPEN) &
+      KeywordExpression[0:] &
+      ~lepl.Literal(self.TUPLE_CLOSE)) > _TupleSyntax
 
-      if state == SYMBOL:
-        bytes.append(c)
-        count -= 1
-        if not count:
-          state = INITIAL; yield ''.join(bytes); continue
+    # Eval-data special form:
+    def _EvalDataSyntax(parts):
+      tuple_ = _TupleSyntax(parts)
+      tuple_ = Tuple([(key, _UnquoteSyntax(value)) for key, value in tuple_.items()])
+      tuple_ = Tuple([(0, self.QUOTE_PROCEDURE), (1, tuple_)])
+      return tuple_
+    EvalDataSyntax = (
+      ~lepl.Literal(self.EVAL_DATA_OPEN) &
+      KeywordExpression[0:] &
+      ~lepl.Literal(self.EVAL_DATA_CLOSE)) > _EvalDataSyntax
 
-    # If we've made it this far, then we've exhausted the input, and are not
-    # in a state of expecting more input. As a generator we signal that we are
-    # now done creating new tokens by raising a StopIteration exception.
-    raise StopIteration
+    # Sequence special form:
+    _SequenceSyntax = lambda args:Sequence(args)
+    SequenceSyntax = (
+      ~lepl.Literal(self.SEQUENCE_OPEN) &
+      Expression[0:] &
+      ~lepl.Literal(self.SEQUENCE_CLOSE)) > _SequenceSyntax
+
+    # Now that we've defined each component, we can go back and complete
+    # Expression's definition:
+    Expression += (QuoteSyntax | UnquoteSyntax | UnquoteSpliceSyntax |
+      TupleSyntax | EvalDataSyntax | SequenceSyntax | ByteArray)
+
+    # ...and our overall grammar: zero or more Expression's optionally
+    # separated by whitespace.
+    Syntax = Expression[0:] & ~lepl.Eos()
+
+    # Save the `Syntax` matcher for use by other methods:
+    self._matcher = Syntax
 
 # ===----------------------------------------------------------------------===
 # End of File

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# === haiku.types.sequence ------------------------------------------------===
+# === haiku.utils.frozendict ----------------------------------------------===
 # Copyright © 2011-2012, RokuSigma Inc. and contributors. See AUTHORS for more
 # details.
 #
@@ -33,28 +33,23 @@
 # DOCUMENTATION, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # ===----------------------------------------------------------------------===
 
-"""A sequence is a linear ordering of values. Sequences (lists) map very well
-onto the built-in Python `list` type."""
+""
 
-__all__ = [
-  'Sequence',
-  'FrozenSequence',
-  'SequenceCompatible',
-]
+from collections import Mapping, Hashable 
 
-# ===----------------------------------------------------------------------===
-
-# Python standard library, abstract base classes
-from abc import ABCMeta
-
-Sequence = list
-FrozenSequence = tuple
-
-class SequenceCompatible(object):
-  ""
-  __metaclass__ = ABCMeta
-SequenceCompatible.register(Sequence)
-SequenceCompatible.register(FrozenSequence)
+class frozendict(Mapping, Hashable): 
+  def __init__(self, *args, **kwargs): 
+    self.__dict = dict(*args, **kwargs) 
+  def __len__(self): 
+    return len(self.__dict) 
+  def __iter__(self): 
+    return iter(self.__dict) 
+  def __getitem__(self, key): 
+    return self.__dict[key] 
+  def __hash__(self): 
+    return hash(frozenset(self.__dict.iteritems())) 
+  def __repr__(self): 
+    return 'frozendict(%r)' % (self.__dict,) 
 
 # ===----------------------------------------------------------------------===
 # End of File

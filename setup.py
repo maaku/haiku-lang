@@ -78,7 +78,7 @@ setup(name='haiku-lang',
   version=version,
   description='An embedable LISP implemented on top of the Python interpreter.',
   install_requires=[
-    'LEPL>=5.0.2',
+    'LEPL>=5.1.1',
     'bitstring>=3.0.2',
     'python-patterns>=0.0.1',
   ],
