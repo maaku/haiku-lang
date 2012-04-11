@@ -104,7 +104,9 @@ class BaseInterpreter(object):
       if 0 not in expression:
         raise SyntaxError(
           u"expected procedure name in position 0")
-      proc = self.evaluate(expression.pop(0), environment)
+      proc = self.evaluate(expression[0], environment)
+      expression = Tuple([(key, expression[key])
+        for key in filter(lambda key:key!=0, expression.keys())])
       if proc not in ('quote',):
         expression = Tuple([(key, self.evaluate(expression[key], environment))
                             for key in expression])

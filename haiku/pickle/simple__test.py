@@ -121,8 +121,6 @@ SCENARIOS = [
   # Unicode strings:
   dict(lisp=u'""',             python=[u""],  eval=[u""]),
   dict(lisp=u'"-"',            python=[u"-"], eval=[u"-"]),
-  dict(lisp=u"'-'[]",          python=[{0:'quote',1:'-'},{0:'quote',1:{}}], eval=['-',{}], skip=['dump']),
-  dict(lisp=u"'- '[]",         python=[{0:'quote',1:'-'},{0:'quote',1:{}}], eval=['-',{}]),
   dict(lisp=u'"\\\\"',         python=[u"\u005c"],       eval=[u"\u005c"]),
   dict(lisp=u'"\\\""',         python=[u"\u0022"],       eval=[u"\u0022"]),
   dict(lisp=u'"\\\\\\\""',     python=[u"\u005c\u0022"], eval=[u"\u005c\u0022"]),
@@ -133,17 +131,32 @@ SCENARIOS = [
   dict(lisp   = u'"\\u3053\\u3093\\u306b\\u3061\\u306f\\u4e16\\u754c\\uff01"',
        python = [u"こんにちは世界！"],
        eval   = [u"こんにちは世界！"]),
+  dict(lisp   = u"'-'[]",
+       python = [
+         Tuple([
+           (0, 'quote'),
+           (1, '-'),
+         ]),
+         Tuple([
+           (0, 'quote'),
+           (1, Tuple()),
+         ]),
+       ],
+       eval   = ['-', Tuple()], skip=['dump']),
+  dict(lisp   = u"'- '[]",
+       python = [{0:'quote',1:'-'},{0:'quote',1:{}}],
+       eval   = ['-',{}]),
   # FIXME: add tests for smart quotes
 
   # Empty sequences (edge cases):
-  dict(lisp=u'[]', python=[{}],                          skip=['eval']),
-  dict(lisp=u'{}', python=[{0:'quote',1:{}}], eval=[{}], skip=['dump']),
-  dict(lisp=u'()', python=[[]],                          eval=[[]]),
+  dict(lisp=u'[]', python=[Tuple()],                                             skip=['eval']),
+  dict(lisp=u'{}', python=[Tuple([(0, 'quote'), (1, Tuple())])], eval=[Tuple()], skip=['dump']),
+  dict(lisp=u'()', python=[Sequence()],                          eval=[Sequence()]),
   # FIXME: implement correct pattern matching detection of eval-data tuples,
   #   and implement associated unit tests
 
   # Basic tuple forms:
-  dict(lisp=u'[]',              python=[{}],                                  skip=['eval']),
+  dict(lisp=u'[]',              python=[Tuple()],                             skip=['eval']),
   dict(lisp=u'[a]',             python=[{0:'a'}],                             skip=['eval']),
   dict(lisp=u'[a b c]',         python=[{0:'a',1:'b',2:'c'}],                 skip=['eval']),
   dict(lisp=u'[1 -2 3]',        python=[{0:1,1:-2,2:3}],                      skip=['eval']),

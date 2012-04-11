@@ -38,7 +38,6 @@ onto the built-in Python `list` type."""
 
 __all__ = [
   'Sequence',
-  'FrozenSequence',
   'SequenceCompatible',
 ]
 
@@ -47,14 +46,13 @@ __all__ = [
 # Python standard library, abstract base classes
 from abc import ABCMeta
 
-Sequence = list
-FrozenSequence = tuple
+Sequence = tuple
 
 class SequenceCompatible(object):
   ""
   __metaclass__ = ABCMeta
 SequenceCompatible.register(Sequence)
-SequenceCompatible.register(FrozenSequence)
+SequenceCompatible.register(list)
 
 # ===----------------------------------------------------------------------===
 # End of File

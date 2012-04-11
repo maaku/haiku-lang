@@ -173,7 +173,7 @@ SCENARIOS = [
   # Empty sequences (edge cases):
   dict(lisp='[]', python=[{}],                           skip=['eval']),
   dict(lisp='{}', python=[{0:'quote',1:{}}], eval_=[{}]),
-  dict(lisp='()', python=[[]],               eval_=[[]]),
+  dict(lisp='()', python=[()],               eval_=[()]),
   # FIXME: implement correct pattern matching detection of eval-data tuples,
   #   and implement associated unit tests
 
@@ -195,30 +195,66 @@ SCENARIOS = [
        skip   = ['eval','load']),
 
   # Complex tuple forms:
-  # FIXME: these require Tuples (dictionaries) as keys... which Python doesn't
-  #   allow. This is a major, MAJOR problem which I am for the moment
-  #   pretending doesn't exist.
-  #dict(lisp   = '[[7:integer\'1:\x01][7:integer\'1:\x02][7:integer\'1:\x03]=[3:nil]\'5:false=\'4:true[4:true]]',
+  dict(lisp   = '[[7:integer\'1:\x01][7:integer\'1:\x02][7:integer\'1:\x03]=['
+                '3:nil]\'5:false=\'4:true[4:true]]',
+       python = [
+         Tuple([
+           (0, 1),
+           (1, 2),
+           (2, 3),
+           (None, Tuple([
+             (0, 'quote'),
+             (1, 'false')])),
+           (Tuple([
+             (0, 'quote'),
+             (1, 'true')]), True),
+         ])],
+       skip   = ['eval','load']),
+  # FIXME: the next two tests are commented out because at this time they do
+  #   not run deterministically as the ordering of tuples depends on their
+  #   memory location. This needs to be fixed somehow, someway!
+  #dict(lisp   = '[2:if[1:=[7:integer\'1:\x01][7:integer\'1:\x02]]=\'4:then[3:'
+  #              'nil]=\'4:else[6:decode4:whew=\'8:encoding\'5:utf-8]]',
   #     python = [
-  #       FrozenTuple([
-  #         (0, 1),
-  #         (1, 2),
-  #         (2, 3),
-  #         (None, FrozenTuple([
-  #           (0, 'quote'),
-  #           (1, 'false')])),
-  #         (FrozenTuple([
-  #           (0, 'quote'),
-  #           (1, 'true')]), True),
+  #       Tuple([
+  #         (0, 'if'),
+  #         (1, Tuple([
+  #             (0, '='),
+  #             (1, 1),
+  #             (2, 2),
+  #           ])),
+  #         (Tuple([
+  #             (0, 'quote'),
+  #             (1, 'then'),
+  #           ]), None),
+  #         (Tuple([
+  #             (0, 'quote'),
+  #             (1, 'else'),
+  #           ]), u"whew"),
   #       ])],
-  #     skip   = ['eval']),
-  #dict(lisp   = '[2:if[1:=[7:integer\'1:\x01][7:integer\'1:\x02]]=\'4:then[3:nil]=\'4:else[6:decode4:whew=\'8:encoding\'5:utf-8]]',
-  #     python = [{0:'if',1:{0:'=',1:1,2:2},{0:'quote',1:{0:'then'}}:None,{0:'quote',1:{0:'else'}}:u"whew"}],
   #     eval_  = [u"whew"],
-  #     skip   = ['dump']),
-  #dict(lisp   = '[2:if[1:=[7:integer\'1:\x01][7:integer\'1:\x02]]=\'4:else[decode\'4:whew=\'8:encoding5:utf-8]=\'4:then[3:nil]]',
-  #     python = [{0:'if',1:{0:'=',1:1,2:2},'then':None,'else':u"whew"}],
-  #     eval_  = [u"whew"]),
+  #     skip   = ['dump','load']),
+  #dict(lisp   = '[2:if[1:=[7:integer\'1:\x01][7:integer\'1:\x02]]=\'4:else[6:'
+  #              'decode4:whew=\'8:encoding\'5:utf-8]]=\'4:then[3:nil]',
+  #     python = [
+  #       Tuple([
+  #         (0, 'if'),
+  #         (1, Tuple([
+  #             (0, '='),
+  #             (1, 1),
+  #             (2, 2),
+  #           ])),
+  #         (Tuple([
+  #             (0, 'quote'),
+  #             (1, 'then'),
+  #           ]), None),
+  #         (Tuple([
+  #             (0, 'quote'),
+  #             (1, 'else'),
+  #           ]), u"whew"),
+  #       ])],
+  #     eval_  = [u"whew"],
+  #     skip   = ['load']),
 
   # Integer arithmetic operators:
   dict(lisp   = '[1:+[7:integer\':][7:integer\'1:\x01]]',
@@ -544,9 +580,25 @@ SCENARIOS = [
        skip   = ['load']),
 
   # String operators:
-  #dict(lisp   = '[3:cat "Hello, " "world!"]',
-  #     python = [{0:'cat',1:{0:'decode',1:{0:'quote',1:'Hello, '},2:u"world!"}],
-  #     eval_  = [u"Hello, world!"]),
+  dict(lisp   = '[3:cat[6:decode\'7:Hello, =\'8:encoding\'5:utf-8][6:decode\''
+                '6:world!=\'8:encoding\'5:utf-8]]',
+       python = [Tuple([
+           (0, 'cat'),
+           (1, Tuple([
+               (0, 'decode'),
+               (1, Tuple([(0, 'quote'), (1, 'Hello, ')])),
+               (Tuple([(0, 'quote'), (1, 'encoding')]),
+                Tuple([(0, 'quote'), (1, 'utf-8')])),
+             ])),
+           (2, Tuple([
+               (0, 'decode'),
+               (1, Tuple([(0, 'quote'), (1, 'world!')])),
+               (Tuple([(0, 'quote'), (1, 'encoding')]),
+                Tuple([(0, 'quote'), (1, 'utf-8')])),
+             ])),
+         ])],
+       eval_  = [u"Hello, world!"],
+       skip   = []),
 ]
 
 class TestCanonicalExpressionPickler(unittest2.TestCase):

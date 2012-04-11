@@ -196,11 +196,11 @@ class CanonicalExpressionPickler(BasePickler):
             self._serialize(expression[1])])
 
       args = []
-      kwargs = Tuple(expression)
-      kwargs_keys = kwargs.keys()
+      kwargs_keys = expression.keys()
       for key in count():
         if key in kwargs_keys:
-          args.append(kwargs.pop(key))
+          kwargs_keys.remove(key)
+          args.append(expression[key])
         else:
           break
       return ''.join([
@@ -212,7 +212,7 @@ class CanonicalExpressionPickler(BasePickler):
               self.ASSOCIATION_OPERATOR.encode('utf-8'),
               self._serialize(key),
               self._serialize(expression[key]),
-            ]) for key in sorted(kwargs.keys()))]),
+            ]) for key in sorted(kwargs_keys))]),
         self.TUPLE_CLOSE.encode('utf-8')])
 
     # Relations:
@@ -300,11 +300,11 @@ class CanonicalExpressionPickler(BasePickler):
       # (Remember, Python's `tuple` is quite different from haiku's `Tuple`)
       kwargs = filter(lambda arg:isinstance(arg, tuple), parts)
       args   = filter(lambda arg:arg not in kwargs, parts)
-      tuple_ = FrozenTuple(kwargs)
+      tuple_ = Tuple(kwargs)
       if len(kwargs) != len(tuple_):
         raise self.SyntaxError(
           u"duplicate keys in keyword arguments")
-      tuple_ = FrozenTuple([x for x in izip(icount(), args)] + kwargs)
+      tuple_ = Tuple([x for x in izip(icount(), args)] + kwargs)
       if len(parts) != len(tuple_):
         dups = filter(lambda x:x in tuple_, xrange(len(args)))
         raise self.SyntaxError(

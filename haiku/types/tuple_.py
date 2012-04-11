@@ -47,7 +47,6 @@ for our purposes."""
 
 __all__ = [
   'Tuple',
-  'FrozenTuple',
   'TupleCompatible',
 ]
 
@@ -56,14 +55,13 @@ __all__ = [
 # Python standard library, abstract base classes
 from abc import ABCMeta
 
-Tuple = dict
-from haiku.utils.frozendict import frozendict as FrozenTuple
+from haiku.utils.frozendict import frozendict as Tuple
 
 class TupleCompatible(object):
   ""
   __metaclass__ = ABCMeta
 TupleCompatible.register(Tuple)
-TupleCompatible.register(FrozenTuple)
+TupleCompatible.register(dict)
 
 # ===----------------------------------------------------------------------===
 # End of File

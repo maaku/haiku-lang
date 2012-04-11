@@ -231,24 +231,24 @@ class SimpleExpressionPickler(BasePickler):
           return u"".join([self.UNQUOTE_SPLICE_OPERATOR, self.dumps(expression[1])])
 
       args = []
-      kwargs = Tuple(expression)
-      kwargs_keys = kwargs.keys()
+      kwargs_keys = expression.keys()
       for key in count():
         if key in kwargs_keys:
-          args.append(kwargs.pop(key))
+          kwargs_keys.remove(key)
+          args.append(expression[key])
         else:
           break
       return u"".join([
         self.TUPLE_OPEN,
         u"".join([
           self.dumps(*args),
-          (len(args) and len(kwargs)) and u" " or u"",
+          (len(args) and len(kwargs_keys)) and u" " or u"",
           u" ".join(
             u"".join([
               self.dumps(key),
               self.ASSOCIATION_OPERATOR,
               self.dumps(expression[key]),
-            ]) for key in sorted(kwargs.keys()))]),
+            ]) for key in sorted(kwargs_keys))]),
         self.TUPLE_CLOSE])
 
     # Relations:
@@ -402,7 +402,7 @@ class SimpleExpressionPickler(BasePickler):
         if len(kwargs) != len(tuple_):
           raise self.SyntaxError(
             u"duplicate keys in keyword arguments")
-        tuple_.update(Tuple(izip(icount(), args)))
+        tuple_ = Tuple([x for x in izip(icount(), args)] + kwargs)
         if len(parts) != len(tuple_):
           dups = filter(lambda x:x in tuple_, xrange(len(args)))
           raise self.SyntaxError(
