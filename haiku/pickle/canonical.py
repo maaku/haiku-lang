@@ -174,14 +174,15 @@ class CanonicalExpressionPickler(BasePickler):
       # Output special forms:
       if special_pattern(expression):
         if expression[0] == self.QUOTE_PROCEDURE:
-          #if (isinstance(expression[1], TupleCompatible) and
-          #    all(special_pattern(expression[1][key]) and
-          #        expression[1][key][0] == self.UNQUOTE_PROCEDURE
-          #        for key in expression[1].keys())):
-          #  return ''.join([
-          #    self.EVAL_DATA_OPEN.encode('utf-8'),
-          #    self.dumps(expression[1]),
-          #    self.EVAL_DATA_CLOSE.encode('utf-8')])
+          if (isinstance(expression[1], TupleCompatible) and
+              all(special_pattern(expression[1][key]) and
+                  expression[1][key][0] == self.UNQUOTE_PROCEDURE
+                  for key in expression[1])):
+            return ''.join([
+              self.EVAL_DATA_OPEN.encode('utf-8'),
+              self._serialize(Tuple((key, expression[1][key][1])
+                                    for key in expression[1]))[1:-1],
+              self.EVAL_DATA_CLOSE.encode('utf-8')])
           return ''.join([
             self.QUOTE_OPERATOR.encode('utf-8'),
             self._serialize(expression[1])])
