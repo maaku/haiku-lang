@@ -53,7 +53,7 @@ builtinEnvironment[_b64encode] = Procedure(
   defaults    = Tuple(),
   ellipsis    = False,
   environment = builtinEnvironment,
-  body        = lambda eval_,env:base64.standard_b64encode(env[1]),
+  body        = lambda eval_,env:b64encode(env[1]),
 )
 
 builtinEnvironment[_b64decode] = Procedure(
@@ -61,7 +61,7 @@ builtinEnvironment[_b64decode] = Procedure(
   defaults    = Tuple(),
   ellipsis    = False,
   environment = builtinEnvironment,
-  body        = lambda eval_,env:base64.standard_b64decode(env[1]),
+  body        = lambda eval_,env:b64decode(env[1]),
 )
 
 # ===----------------------------------------------------------------------===
