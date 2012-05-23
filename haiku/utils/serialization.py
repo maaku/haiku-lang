@@ -57,6 +57,11 @@ def i2bytearray(i):
   l = l + (m and 8-m or 0)
   return Symbol(Bits(intle=i, length=l).bytes)
 
+def bytearray2i(b):
+  "Deserializes a little-endian integer representation."
+  if not b: return 0
+  else:     return Bits(bytes=b).intle
+
 # ===----------------------------------------------------------------------===
 
 def i2varnumber(i):

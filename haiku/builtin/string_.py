@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# === haiku.builtin.types -------------------------------------------------===
+# === haiku.builtin.string_ -----------------------------------------------===
 # Copyright © 2011-2012, RokuSigma Inc. and contributors. See AUTHORS for more
 # details.
 #
@@ -35,39 +35,60 @@
 
 ""
 
+import operator
+
 from haiku.builtin import builtinEnvironment
+from haiku.pickle import CanonicalExpressionPickler
 from haiku.types import *
-from haiku.utils.serialization import bytearray2i
 __all__ = []
 
 # ===----------------------------------------------------------------------===
 
-_boolean, _integer, _rational, = map(Symbol,
-'boolean   integer   rational'.split())
+_cat, = map(Symbol,
+'cat'.split())
 
-builtinEnvironment[_boolean] = Procedure(
-  params      = Tuple([(1, AlphaCompatible)]),
+from operator import concat
+
+builtinEnvironment[_cat] = Procedure(
+  params      = Tuple([
+      (1, (SymbolCompatible, UnicodeCompatible)),
+      (2, (SymbolCompatible, UnicodeCompatible)),
+    ]),
   defaults    = Tuple(),
   ellipsis    = False,
   environment = builtinEnvironment,
-  body        = lambda eval_,env:Boolean(env[1]),
+  body        = lambda eval_,env:concat(env[1], env[2]),
 )
 
-builtinEnvironment[_integer] = Procedure(
-  params      = Tuple([(1, AlphaCompatible)]),
-  defaults    = Tuple(),
+# ===----------------------------------------------------------------------===
+
+_encode, _decode = map(Symbol,
+'encode   decode'.split())
+
+builtinEnvironment[_encode] = Procedure(
+  params      = Tuple([
+      (1,          UnicodeCompatible),
+      ('encoding', SymbolCompatible),
+    ]),
+  defaults    = Tuple([
+      ('encoding', 'utf-8'),
+    ]),
   ellipsis    = False,
   environment = builtinEnvironment,
-  body        = lambda eval_,env:Integer(bytearray2i(env[1])),
+  body        = lambda eval_,env:env[1].encode(env['encoding']),
 )
 
-builtinEnvironment[_rational] = Procedure(
-  params      = Tuple([(1, AlphaCompatible),
-                       (2, AlphaCompatible)]),
-  defaults    = Tuple(),
+builtinEnvironment[_decode] = Procedure(
+  params      = Tuple([
+      (1,          SymbolCompatible),
+      ('encoding', SymbolCompatible),
+    ]),
+  defaults    = Tuple([
+      ('encoding', 'utf-8'),
+    ]),
   ellipsis    = False,
   environment = builtinEnvironment,
-  body        = lambda eval_,env:Fraction(env[1], env[2]),
+  body        = lambda eval_,env:env[1].decode(env['encoding']),
 )
 
 # ===----------------------------------------------------------------------===

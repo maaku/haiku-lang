@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# === haiku.builtin.types -------------------------------------------------===
+# === haiku.builtin.quote -------------------------------------------------===
 # Copyright © 2011-2012, RokuSigma Inc. and contributors. See AUTHORS for more
 # details.
 #
@@ -37,37 +37,53 @@
 
 from haiku.builtin import builtinEnvironment
 from haiku.types import *
-from haiku.utils.serialization import bytearray2i
 __all__ = []
 
 # ===----------------------------------------------------------------------===
 
-_boolean, _integer, _rational, = map(Symbol,
-'boolean   integer   rational'.split())
+_quote, _unquote, _unquote_splice = map(Symbol,
+'quote   unquote   unquote-splice'.split())
 
-builtinEnvironment[_boolean] = Procedure(
+def do_quote(eval_, obj, level=0):
+  if isinstance(obj, TupleCompatible):
+    for key, value in obj.items():
+      if isinstance(value, TupleCompatible) and 0 in value: 
+        if value[0] in (_quote,):
+          obj[key] = do_quote(eval_, value, level+1)
+        if value[0] in (_unquote, _unquote_splice):
+          if level:
+            obj[key] = do_quote(eval_, value, level-1)
+          else:
+            obj[key] = eval_(value, env)
+  return obj
+builtinEnvironment[_quote] = Procedure(
   params      = Tuple([(1, AlphaCompatible)]),
   defaults    = Tuple(),
   ellipsis    = False,
   environment = builtinEnvironment,
-  body        = lambda eval_,env:Boolean(env[1]),
+  body        = lambda eval_,env:do_quote(eval_,env[1]),
 )
 
-builtinEnvironment[_integer] = Procedure(
+def do_unquote(eval_, env):
+  raise SyntaxError(
+    u"unquote not allowed outside of enclosing quote")
+builtinEnvironment[_unquote] = Procedure(
   params      = Tuple([(1, AlphaCompatible)]),
   defaults    = Tuple(),
   ellipsis    = False,
   environment = builtinEnvironment,
-  body        = lambda eval_,env:Integer(bytearray2i(env[1])),
+  body        = do_unquote,
 )
 
-builtinEnvironment[_rational] = Procedure(
-  params      = Tuple([(1, AlphaCompatible),
-                       (2, AlphaCompatible)]),
+def do_unquote_splice(eval_, env):
+  raise SyntaxError(
+    u"unquote-splice not allowed outside of enclosing quote")
+builtinEnvironment[_unquote_splice] = Procedure(
+  params      = Tuple([(1, TupleCompatible)]),
   defaults    = Tuple(),
   ellipsis    = False,
   environment = builtinEnvironment,
-  body        = lambda eval_,env:Fraction(env[1], env[2]),
+  body        = do_unquote_splice,
 )
 
 # ===----------------------------------------------------------------------===

@@ -36,10 +36,13 @@
 from haiku.environment import Environment
 builtinEnvironment = Environment()
 
-from .base64_  import *
-from .constant import *
-from .pickle   import *
-from .types    import *
+from .base64_   import *
+from .constant  import *
+from .operator_ import *
+from .pickle    import *
+from .quote     import *
+from .string_   import *
+from .types     import *
 
 # ===----------------------------------------------------------------------===
 # End of File
