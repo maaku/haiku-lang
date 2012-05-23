@@ -159,10 +159,11 @@ class CanonicalExpressionPickler(BasePickler):
 
     # Sets:
     elif isinstance(expression, SetCompatible):
+      canonelems = [self._serialize(elem) for elem in expression]
       return ''.join([
         self.TUPLE_OPEN.encode('utf-8'),
         s2varstring('set'),
-        ''.join(self._serialize(elem) for elem in sorted(expression)),
+        ''.join(elem for elem in sorted(canonelems)),
         self.TUPLE_CLOSE.encode('utf-8')])
 
     # FIXME: implement meta-values
@@ -203,6 +204,11 @@ class CanonicalExpressionPickler(BasePickler):
           args.append(expression[key])
         else:
           break
+      canonkeys = Tuple([
+        (self._serialize(key),
+         self._serialize(expression[key]))
+        for key in kwargs_keys
+      ])
       return ''.join([
         self.TUPLE_OPEN.encode('utf-8'),
         ''.join([
@@ -210,9 +216,9 @@ class CanonicalExpressionPickler(BasePickler):
           ''.join(
             ''.join([
               self.ASSOCIATION_OPERATOR.encode('utf-8'),
-              self._serialize(key),
-              self._serialize(expression[key]),
-            ]) for key in sorted(kwargs_keys))]),
+              serialized_key,
+              canonkeys[serialized_key],
+            ]) for serialized_key in sorted(canonkeys.keys()))]),
         self.TUPLE_CLOSE.encode('utf-8')])
 
     # Relations:

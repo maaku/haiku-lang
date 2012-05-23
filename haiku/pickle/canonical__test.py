@@ -202,8 +202,8 @@ SCENARIOS = [
        skip   = ['eval','load']),
 
   # Complex tuple forms:
-  dict(lisp   = '[[7:integer\'1:\x01][7:integer\'1:\x02][7:integer\'1:\x03]=['
-                '3:nil]\'5:false=\'4:true[4:true]]',
+  dict(lisp   = '[[7:integer\'1:\x01][7:integer\'1:\x02][7:integer\'1:\x03]='
+                '\'4:true[4:true]=[3:nil]\'5:false]',
        python = [
          Tuple([
            (0, 1),
