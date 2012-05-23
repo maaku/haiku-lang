@@ -176,7 +176,8 @@ class CanonicalExpressionPickler(BasePickler):
       if special_pattern(expression):
         if expression[0] == self.QUOTE_PROCEDURE:
           if (isinstance(expression[1], TupleCompatible) and
-              all(special_pattern(expression[1][key]) and
+              all(isinstance(expression[1][key], TupleCompatible) and
+                  special_pattern(expression[1][key])             and
                   expression[1][key][0] == self.UNQUOTE_PROCEDURE
                   for key in expression[1])):
             return ''.join([
