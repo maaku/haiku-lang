@@ -37,15 +37,22 @@
 import unittest2
 
 # Python patterns, scenario unit-testing
-from python_patterns.unittest.scenario import ScenarioMeta, ScenarioTest
+from python_patterns.unittest.scenario import ScenarioMeta
 
-# Python standard library, string input/output
-from StringIO import StringIO
-
+# Haiku language, built-in primitives
+from haiku.builtin import builtinEnvironment
+# Haiku language, environment mapping
+from haiku.environment import Environment
+# Haiku language, interpreter
+from haiku.interpreter import BaseInterpreter
 # Haiku language, s-expression pickler
 from haiku.pickle import CanonicalExpressionPickler
 # Haiku language, type hierarchy
 from haiku.types import *
+
+# Haiku language, scenario testing
+from haiku.utils.testing import (
+  EvaluateScenarioTest, PicklerDumpScenarioTest, PicklerLoadScenarioTest)
 
 SCENARIOS = [
   # Empty string (edge case):
@@ -61,7 +68,7 @@ SCENARIOS = [
   dict(lisp   = '4:\001\002\003\004',
        python = ['\x01\x02\x03\x04'],
        skip   = ['eval']),
-  
+
   # Constant literals:
   dict(lisp='[3:nil]',   python=[None],  eval_=[None],  skip=['load']),
   dict(lisp='[5:false]', python=[False], eval_=[False], skip=['load']),
@@ -261,13 +268,13 @@ SCENARIOS = [
        python = [{0:'+',1:0L,2:1L}],
        eval_  = [1],
        skip   = ['load']),
-  dict(lisp   = '[1:+[7:integer\'1:\x02][7:integer\'1:\x03][7:integer\'1:\x04]]',
-       python = [{0:'+',1:2L,2:3L,3:4L}],
-       eval_  = [9],
+  dict(lisp   = '[1:+[7:integer\'1:\x02][7:integer\'1:\x03]]',
+       python = [{0:'+',1:2L,2:3L}],
+       eval_  = [5],
        skip   = ['load']),
-  dict(lisp   = '[1:+[7:integer\'1:\x05][7:integer\'1:\x06][7:integer\'1:\x07][7:integer\'1:\x08]]',
-       python = [{0:'+',1:5L,2:6L,3:7L,4:8L}],
-       eval_  = [26],
+  dict(lisp   = '[1:+[7:integer\'1:\x05][7:integer\'1:\x06]]',
+       python = [{0:'+',1:5L,2:6L}],
+       eval_  = [11],
        skip   = ['load']),
   dict(lisp   = '[1:+[7:integer\'1:\xff][7:integer\'1:\x01]]',
        python = [{0:'+',1:-1L,2:1L}],
@@ -278,13 +285,13 @@ SCENARIOS = [
        python = [{0:'-',1:0L,2:1L}],
        eval_  = [-1],
        skip   = ['load']),
-  dict(lisp   = '[1:-[7:integer\'1:\x02][7:integer\'1:\x03][7:integer\'1:\x04]]',
-       python = [{0:'-',1:2L,2:3L,3:4L}],
-       eval_  = [-5],
+  dict(lisp   = '[1:-[7:integer\'1:\x02][7:integer\'1:\x03]]',
+       python = [{0:'-',1:2L,2:3L}],
+       eval_  = [-1],
        skip   = ['load']),
-  dict(lisp   = '[1:-[7:integer\'1:\x05][7:integer\'1:\x06][7:integer\'1:\x07][7:integer\'1:\x08]]',
-       python = [{0:'-',1:5L,2:6L,3:7L,4:8L}],
-       eval_  = [-16],
+  dict(lisp   = '[1:-[7:integer\'1:\x09][7:integer\'1:\x02]]',
+       python = [{0:'-',1:9L,2:2L}],
+       eval_  = [7],
        skip   = ['load']),
   dict(lisp   = '[1:-[7:integer\'1:\x01][7:integer\'1:\xff]]',
        python = [{0:'-',1:1L,2:-1L}],
@@ -295,13 +302,13 @@ SCENARIOS = [
        python = [{0:'/',1:0L,2:1L}],
        eval_  = [0],
        skip   = ['load']),
-  dict(lisp   = '[1:/[7:integer\'1:\x02][7:integer\'1:\x03][7:integer\'1:\x04]]',
-       python = [{0:'/',1:2L,2:3L,3:4L}],
-       eval_  = [Fraction(1,6)],
+  dict(lisp   = '[1:/[7:integer\'1:\x02][7:integer\'1:\x03]]',
+       python = [{0:'/',1:2L,2:3L}],
+       eval_  = [Fraction(2,3)],
        skip   = ['load']),
-  dict(lisp   = '[1:/[7:integer\'1:\x05][7:integer\'1:\x06][7:integer\'1:\x07][7:integer\'1:\x08]]',
-       python = [{0:'/',1:5L,2:6L,3:7L,4:8L}],
-       eval_  = [Fraction(5,336)],
+  dict(lisp   = '[1:/[7:integer\'1:\x05][7:integer\'1:\x06]]',
+       python = [{0:'/',1:5L,2:6L}],
+       eval_  = [Fraction(5,6)],
        skip   = ['load']),
   dict(lisp   = '[1:/[7:integer\'1:\xfb][7:integer\'1:\x04]]',
        python = [{0:'/',1:-5L,2:4L}],
@@ -352,26 +359,26 @@ SCENARIOS = [
        python = [{0:'*',1:0L,2:1L}],
        eval_  = [0],
        skip   = ['load']),
-  dict(lisp   = '[1:*[7:integer\'1:\x02][7:integer\'1:\x03][7:integer\'1:\x04]]',
-       python = [{0:'*',1:2L,2:3L,3:4L}],
-       eval_  = [24],
+  dict(lisp   = '[1:*[7:integer\'1:\x02][7:integer\'1:\x03]]',
+       python = [{0:'*',1:2L,2:3L}],
+       eval_  = [6],
        skip   = ['load']),
-  dict(lisp   = '[1:*[7:integer\'1:\x05][7:integer\'1:\x06][7:integer\'1:\x07][7:integer\'1:\x08]]',
-       python = [{0:'*',1:5L,2:6L,3:7L,4:8L}],
-       eval_  = [1680],
+  dict(lisp   = '[1:*[7:integer\'1:\x05][7:integer\'1:\x06]]',
+       python = [{0:'*',1:5L,2:6L}],
+       eval_  = [30],
        skip   = ['load']),
 
-  dict(lisp   = '[3:div[7:integer\':][7:integer\'1:\x01]]',
-       python = [{0:'div',1:0L,2:1L}],
-       eval_  = [0],
+  dict(lisp   = '[6:divmod[7:integer\':][7:integer\'1:\x01]]',
+       python = [{0:'divmod',1:0L,2:1L}],
+       eval_  = [{'quotient':0, 'remainder':0}],
        skip   = ['load']),
-  dict(lisp   = '[3:div[7:integer\'1:\x02][7:integer\'1:\x03][7:integer\'1:\x04]]',
-       python = [{0:'div',1:2L,2:3L,3:4L}],
-       eval_  = [0],
+  dict(lisp   = '[6:divmod[7:integer\'1:\x03][7:integer\'1:\x02]]',
+       python = [{0:'divmod',1:3L,2:2L}],
+       eval_  = [{'quotient':1, 'remainder':1}],
        skip   = ['load']),
-  dict(lisp   = '[3:div[7:integer\'1:\x05][7:integer\'1:\x06][7:integer\'1:\x07][7:integer\'1:\x08]]',
-       python = [{0:'div',1:5L,2:6L,3:7L,4:8L}],
-       eval_  = [0],
+  dict(lisp   = '[6:divmod[7:integer\'1:\x1d][7:integer\'1:\x07]]',
+       python = [{0:'divmod',1:29L,2:7L}],
+       eval_  = [{'quotient':4, 'remainder':1}],
        skip   = ['load']),
 
   dict(lisp   = '[3:pow[7:integer\':][7:integer\'1:\x08]]',
@@ -390,9 +397,9 @@ SCENARIOS = [
        python = [{0:'pow',1:3L,2:3L}],
        eval_  = [27],
        skip   = ['load']),
-  dict(lisp   = '[3:pow[7:integer\'1:\x07][7:integer\'1:\x02][7:integer\'1:\x05]]',
-       python = [{0:'pow',1:7L,2:2L,3:5L}],
-       eval_  = [282475249],
+  dict(lisp   = '[3:pow[7:integer\'1:\x07][7:integer\'1:\x02][7:integer\'1:\x1d]]',
+       python = [{0:'pow',1:7L,2:2L,3:29L}],
+       eval_  = [20],
        skip   = ['load']),
   dict(lisp   = '[3:pow[7:integer\'1:\xff][7:integer\':]]',
        python = [{0:'pow',1:-1L,2:0L}],
@@ -467,30 +474,39 @@ SCENARIOS = [
        eval_  = [False],
        skip   = ['load']),
 
-  dict(lisp   = '[1:~[5:false]]',   
-       python = [{0:'~',1:False}],        
+  dict(lisp   = '[1:![5:false]]',
+       python = [{0:'!',1:False}],
        eval_  = [True],
        skip   = ['load']),
-  dict(lisp   = '[1:~[4:true]]',   
-       python = [{0:'~',1: True}],        
+  dict(lisp   = '[1:![4:true]]',
+       python = [{0:'!',1: True}],
        eval_  = [False],
        skip   = ['load']),
 
+  dict(lisp   = '[1:~[5:false]]',
+       python = [{0:'~',1:False}],
+       eval_  = [-1],
+       skip   = ['load']),
+  dict(lisp   = '[1:~[4:true]]',
+       python = [{0:'~',1: True}],
+       eval_  = [-2],
+       skip   = ['load']),
+
   # Comparative operators:
-  dict(lisp   = '[1:<[7:integer\'1:\xff][7:integer\'1:\xff]]', 
+  dict(lisp   = '[1:<[7:integer\'1:\xff][7:integer\'1:\xff]]',
        python = [{0: '<',1:-1L,2:-1L}],
        eval_  = [False],
        skip   = ['load']),
-  dict(lisp   = '[1:<[7:integer\'1:\xff][7:integer\'1:\x01]]',  
-       python = [{0: '<',1:-1L,2:1L}], 
+  dict(lisp   = '[1:<[7:integer\'1:\xff][7:integer\'1:\x01]]',
+       python = [{0: '<',1:-1L,2:1L}],
        eval_  = [True],
        skip   = ['load']),
-  dict(lisp   = '[1:<[7:integer\'1:\x01][7:integer\'1:\xff]]',  
-       python = [{0: '<',1:1L,2:-1L}], 
+  dict(lisp   = '[1:<[7:integer\'1:\x01][7:integer\'1:\xff]]',
+       python = [{0: '<',1:1L,2:-1L}],
        eval_  = [False],
        skip   = ['load']),
-  dict(lisp   = '[1:<[7:integer\'1:\x01][7:integer\'1:\x01]]',   
-       python = [{0: '<',1:1L,2:1L}],  
+  dict(lisp   = '[1:<[7:integer\'1:\x01][7:integer\'1:\x01]]',
+       python = [{0: '<',1:1L,2:1L}],
        eval_  = [False],
        skip   = ['load']),
 
@@ -498,33 +514,33 @@ SCENARIOS = [
        python = [{0:'<=',1:-1L,2:-1L}],
        eval_  = [True],
        skip   = ['load']),
-  dict(lisp   = '[2:<=[7:integer\'1:\xff][7:integer\'1:\x01]]', 
-       python = [{0:'<=',1:-1L,2:1L}], 
+  dict(lisp   = '[2:<=[7:integer\'1:\xff][7:integer\'1:\x01]]',
+       python = [{0:'<=',1:-1L,2:1L}],
        eval_  = [True],
        skip   = ['load']),
-  dict(lisp   = '[2:<=[7:integer\'1:\x01][7:integer\'1:\xff]]', 
-       python = [{0:'<=',1:1L,2:-1L}], 
+  dict(lisp   = '[2:<=[7:integer\'1:\x01][7:integer\'1:\xff]]',
+       python = [{0:'<=',1:1L,2:-1L}],
        eval_  = [False],
        skip   = ['load']),
-  dict(lisp   = '[2:<=[7:integer\'1:\x01][7:integer\'1:\x01]]',  
-       python = [{0:'<=',1:1L,2:1L}],  
+  dict(lisp   = '[2:<=[7:integer\'1:\x01][7:integer\'1:\x01]]',
+       python = [{0:'<=',1:1L,2:1L}],
        eval_  = [True],
        skip   = ['load']),
 
-  dict(lisp   = '[1:=[7:integer\'1:\xff][7:integer\'1:\xff]]', 
+  dict(lisp   = '[1:=[7:integer\'1:\xff][7:integer\'1:\xff]]',
        python = [{0: '=',1:-1L,2:-1L}],
        eval_  = [True],
        skip   = ['load']),
-  dict(lisp   = '[1:=[7:integer\'1:\xff][7:integer\'1:\x01]]',  
-       python = [{0: '=',1:-1L,2:1L}], 
+  dict(lisp   = '[1:=[7:integer\'1:\xff][7:integer\'1:\x01]]',
+       python = [{0: '=',1:-1L,2:1L}],
        eval_  = [False],
        skip   = ['load']),
-  dict(lisp   = '[1:=[7:integer\'1:\x01][7:integer\'1:\xff]]',  
-       python = [{0: '=',1:1L,2:-1L}], 
+  dict(lisp   = '[1:=[7:integer\'1:\x01][7:integer\'1:\xff]]',
+       python = [{0: '=',1:1L,2:-1L}],
        eval_  = [False],
        skip   = ['load']),
-  dict(lisp   = '[1:=[7:integer\'1:\x01][7:integer\'1:\x01]]',   
-       python = [{0: '=',1:1L,2:1L}],  
+  dict(lisp   = '[1:=[7:integer\'1:\x01][7:integer\'1:\x01]]',
+       python = [{0: '=',1:1L,2:1L}],
        eval_  = [True],
        skip   = ['load']),
 
@@ -532,50 +548,50 @@ SCENARIOS = [
        python = [{0:'>=',1:-1L,2:-1L}],
        eval_  = [True],
        skip   = ['load']),
-  dict(lisp   = '[2:>=[7:integer\'1:\xff][7:integer\'1:\x01]]', 
-       python = [{0:'>=',1:-1L,2:1L}], 
+  dict(lisp   = '[2:>=[7:integer\'1:\xff][7:integer\'1:\x01]]',
+       python = [{0:'>=',1:-1L,2:1L}],
        eval_  = [False],
        skip   = ['load']),
-  dict(lisp   = '[2:>=[7:integer\'1:\x01][7:integer\'1:\xff]]', 
-       python = [{0:'>=',1:1L,2:-1L}], 
+  dict(lisp   = '[2:>=[7:integer\'1:\x01][7:integer\'1:\xff]]',
+       python = [{0:'>=',1:1L,2:-1L}],
        eval_  = [True],
        skip   = ['load']),
-  dict(lisp   = '[2:>=[7:integer\'1:\x01][7:integer\'1:\x01]]',  
-       python = [{0:'>=',1:1L,2:1L}],  
+  dict(lisp   = '[2:>=[7:integer\'1:\x01][7:integer\'1:\x01]]',
+       python = [{0:'>=',1:1L,2:1L}],
        eval_  = [True],
        skip   = ['load']),
 
-  dict(lisp   = '[1:>[7:integer\'1:\xff][7:integer\'1:\xff]]', 
+  dict(lisp   = '[1:>[7:integer\'1:\xff][7:integer\'1:\xff]]',
        python = [{0: '>',1:-1L,2:-1L}],
        eval_  = [False],
        skip   = ['load']),
-  dict(lisp   = '[1:>[7:integer\'1:\xff][7:integer\'1:\x01]]',  
-       python = [{0: '>',1:-1L,2:1L}], 
+  dict(lisp   = '[1:>[7:integer\'1:\xff][7:integer\'1:\x01]]',
+       python = [{0: '>',1:-1L,2:1L}],
        eval_  = [False],
        skip   = ['load']),
-  dict(lisp   = '[1:>[7:integer\'1:\x01][7:integer\'1:\xff]]',  
-       python = [{0: '>',1:1L,2:-1L}], 
+  dict(lisp   = '[1:>[7:integer\'1:\x01][7:integer\'1:\xff]]',
+       python = [{0: '>',1:1L,2:-1L}],
        eval_  = [True],
        skip   = ['load']),
-  dict(lisp   = '[1:>[7:integer\'1:\x01][7:integer\'1:\x01]]',   
-       python = [{0: '>',1:1L,2:1L}],  
+  dict(lisp   = '[1:>[7:integer\'1:\x01][7:integer\'1:\x01]]',
+       python = [{0: '>',1:1L,2:1L}],
        eval_  = [False],
        skip   = ['load']),
 
-  dict(lisp   = '[2:~=[7:integer\'1:\xff][7:integer\'1:\xff]]',
-       python = [{0:'~=',1:-1L,2:-1L}],
+  dict(lisp   = '[2:!=[7:integer\'1:\xff][7:integer\'1:\xff]]',
+       python = [{0:'!=',1:-1L,2:-1L}],
        eval_  = [False],
        skip   = ['load']),
-  dict(lisp   = '[2:~=[7:integer\'1:\xff][7:integer\'1:\x01]]', 
-       python = [{0:'~=',1:-1L,2:1L}], 
+  dict(lisp   = '[2:!=[7:integer\'1:\xff][7:integer\'1:\x01]]',
+       python = [{0:'!=',1:-1L,2:1L}],
        eval_  = [True],
        skip   = ['load']),
-  dict(lisp   = '[2:~=[7:integer\'1:\x01][7:integer\'1:\xff]]', 
-       python = [{0:'~=',1:1L,2:-1L}], 
+  dict(lisp   = '[2:!=[7:integer\'1:\x01][7:integer\'1:\xff]]',
+       python = [{0:'!=',1:1L,2:-1L}],
        eval_  = [True],
        skip   = ['load']),
-  dict(lisp   = '[2:~=[7:integer\'1:\x01][7:integer\'1:\x01]]',  
-       python = [{0:'~=',1:1L,2:1L}],  
+  dict(lisp   = '[2:!=[7:integer\'1:\x01][7:integer\'1:\x01]]',
+       python = [{0:'!=',1:1L,2:1L}],
        eval_  = [False],
        skip   = ['load']),
 
@@ -606,58 +622,14 @@ class TestCanonicalExpressionPickler(unittest2.TestCase):
   objects using the `CanonicalExpressionPickler` class."""
   __metaclass__ = ScenarioMeta
   _pickler = CanonicalExpressionPickler()
-  class test_dump(ScenarioTest):
+  _environment = Environment(parent=builtinEnvironment)
+  _interpreter = BaseInterpreter(pickler=_pickler, environment=_environment)
+  class test_dump(PicklerDumpScenarioTest):
     scenarios = SCENARIOS
-    def __test__(self, **kwargs):
-      # Check if it is okay to run this scenario:
-      skip = kwargs.pop('skip', [])
-      if 'dump' in skip:
-        self.skipTest(u"Scenario not compatible with pickle.dump(); skipping...")
-      # Extract scenario parameters
-      lisp   = kwargs.pop('lisp')
-      python = kwargs.pop('python')
-      # Compare dump(StringIO) vs the prepared Lisp:
-      ostream = StringIO()
-      self._pickler.dump(ostream, *python)
-      self.assertEqual(lisp, ostream.getvalue())
-  class test_dumps(ScenarioTest):
+  class test_load(PicklerLoadScenarioTest):
     scenarios = SCENARIOS
-    def __test__(self, **kwargs):
-      # Check if it is okay to run this scenario:
-      skip = kwargs.pop('skip', [])
-      if 'dump' in skip:
-        self.skipTest(u"Scenario not compatible with pickle.dump(); skipping...")
-      # Extract scenario parameters
-      lisp   = kwargs.pop('lisp')
-      python = kwargs.pop('python')
-      # Compare dumps() vs the prepared Lisp:
-      self.assertEqual(lisp, self._pickler.dumps(*python))
-  class test_load(ScenarioTest):
+  class test_eval(EvaluateScenarioTest):
     scenarios = SCENARIOS
-    def __test__(self, **kwargs):
-      # Check if it is okay to run this scenario:
-      skip = kwargs.pop('skip', [])
-      if 'load' in skip:
-        self.skipTest(u"Scenario not compatible with pickle.dump(); skipping...")
-      # Extract scenario parameters
-      lisp   = kwargs.pop('lisp')
-      python = kwargs.pop('python')
-      # Compare loads(StringIO) vs the prepared Python:
-      istream = StringIO(lisp)
-      actual = self._pickler.load(istream)
-      self.assertEqual(actual, python)
-  class test_loads(ScenarioTest):
-    scenarios = SCENARIOS
-    def __test__(self, **kwargs):
-      # Check if it is okay to run this scenario:
-      skip = kwargs.pop('skip', [])
-      if 'load' in skip:
-        self.skipTest(u"Scenario not compatible with pickle.dump(); skipping...")
-      # Extract scenario parameters
-      lisp   = kwargs.pop('lisp')
-      python = kwargs.pop('python')
-      # Compare loads() vs the prepared Python:
-      self.assertEqual(self._pickler.loads(lisp), python)
 
 # ===----------------------------------------------------------------------===
 # End of File
