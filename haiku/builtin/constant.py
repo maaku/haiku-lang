@@ -41,8 +41,8 @@ __all__ = []
 
 # ===----------------------------------------------------------------------===
 
-_nil, _true, _false, _empty = map(Symbol,
-'nil   true   false   empty'.split())
+_nil, _true, _false, _infinity, _empty = map(Symbol,
+'nil   true   false   infinity   empty'.split())
 
 builtinEnvironment[_nil] = Procedure(
   params      = Tuple(),
@@ -66,6 +66,14 @@ builtinEnvironment[_false] = Procedure(
   ellipsis    = False,
   environment = builtinEnvironment,
   body        = lambda eval_,env:False,
+)
+
+builtinEnvironment[_infinity] = Procedure(
+  params      = Tuple(),
+  defaults    = Tuple(),
+  ellipsis    = False,
+  environment = builtinEnvironment,
+  body        = lambda eval_,env:float('inf'), # FIXME
 )
 
 builtinEnvironment[_empty] = Procedure(
