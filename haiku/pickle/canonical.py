@@ -166,8 +166,6 @@ class CanonicalExpressionPickler(BasePickler):
         ''.join(elem for elem in sorted(canonelems)),
         self.TUPLE_CLOSE.encode('utf-8')])
 
-    # FIXME: implement meta-values
-
     # Tuples(/maps/dictionaries):
     elif isinstance(expression, TupleCompatible):
       special_pattern = lambda expr:(
