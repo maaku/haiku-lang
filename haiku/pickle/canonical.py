@@ -196,28 +196,28 @@ class CanonicalExpressionPickler(BasePickler):
             self._serialize(expression[1])])
 
       args = []
-      kwargs_keys = expression.keys()
-      for key in count():
-        if key in kwargs_keys:
-          kwargs_keys.remove(key)
-          args.append(expression[key])
-        else:
-          break
-      canonkeys = Tuple([
+      kwargs_keys = dict([
         (self._serialize(key),
          self._serialize(expression[key]))
-        for key in kwargs_keys
+        for key in expression.keys()
       ])
+      for key in count():
+        key = self._serialize(key)
+        if key in kwargs_keys:
+          args.append(kwargs_keys[key])
+          del kwargs_keys[key]
+        else:
+          break
       return ''.join([
         self.TUPLE_OPEN.encode('utf-8'),
         ''.join([
-          ''.join(self._serialize(arg) for arg in args),
+          ''.join(args),
           ''.join(
             ''.join([
               self.ASSOCIATION_OPERATOR.encode('utf-8'),
               serialized_key,
-              canonkeys[serialized_key],
-            ]) for serialized_key in sorted(canonkeys.keys()))]),
+              kwargs_keys[serialized_key],
+            ]) for serialized_key in sorted(kwargs_keys.keys()))]),
         self.TUPLE_CLOSE.encode('utf-8')])
 
     # Relations:
