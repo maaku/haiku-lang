@@ -42,8 +42,8 @@ __all__ = []
 
 # ===----------------------------------------------------------------------===
 
-_boolean, _integer, _rational, = map(Symbol,
-'boolean   integer   rational'.split())
+_boolean, _integer, _rational, _tuple, = map(Symbol,
+'boolean   integer   rational   tuple'.split())
 
 builtinEnvironment[_boolean] = Procedure(
   params      = Tuple([(1, AlphaCompatible)]),
@@ -68,6 +68,22 @@ builtinEnvironment[_rational] = Procedure(
   ellipsis    = False,
   environment = builtinEnvironment,
   body        = lambda eval_,env:Fraction(env[1], env[2]),
+)
+
+from itertools import count
+def do_tuple(eval_,env):
+  for key in count(1):
+    if key in env:
+      env[key-1] = env[key]; del env[key]
+    else:
+      break
+  return Tuple(env)
+builtinEnvironment[_tuple] = Procedure(
+  params      = Tuple(),
+  defaults    = Tuple(),
+  ellipsis    = True,
+  environment = builtinEnvironment,
+  body        = do_tuple,
 )
 
 # ===----------------------------------------------------------------------===
