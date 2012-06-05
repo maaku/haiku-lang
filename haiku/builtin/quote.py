@@ -44,24 +44,26 @@ __all__ = []
 _quote, _unquote, _unquote_splice = map(Symbol,
 'quote   unquote   unquote-splice'.split())
 
-def do_quote(eval_, obj, level=0):
+def do_quote(eval_, env, obj, level=0):
+  def quote(key, value):
+    if isinstance(value, TupleCompatible) and 0 in value:
+      if value[0] in (_quote,):
+        return (key, do_quote(eval_, env, value, level+1))
+      if value[0] in (_unquote, _unquote_splice):
+        if level:
+          return (key, do_quote(eval_, env, value, level-1))
+        else:
+          return (key, eval_(value, env))
+    return (key, value)
   if isinstance(obj, TupleCompatible):
-    for key, value in obj.items():
-      if isinstance(value, TupleCompatible) and 0 in value: 
-        if value[0] in (_quote,):
-          obj[key] = do_quote(eval_, value, level+1)
-        if value[0] in (_unquote, _unquote_splice):
-          if level:
-            obj[key] = do_quote(eval_, value, level-1)
-          else:
-            obj[key] = eval_(value, env)
+    obj = Tuple([quote(key, value) for key, value in obj.items()])
   return obj
 builtinEnvironment[_quote] = Procedure(
   params      = Tuple([(1, AlphaCompatible)]),
   defaults    = Tuple(),
   ellipsis    = False,
   environment = builtinEnvironment,
-  body        = lambda eval_,env:do_quote(eval_,env[1]),
+  body        = lambda eval_,env:do_quote(eval_,env,env[1]),
 )
 
 def do_unquote(eval_, env):
